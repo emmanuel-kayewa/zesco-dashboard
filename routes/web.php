@@ -62,8 +62,6 @@ Route::middleware(app()->environment('local')
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/directorate/{directorate:slug}', [DashboardController::class, 'directorate'])->name('dashboard.directorate');
     Route::get('/dashboard/comparison', [DashboardController::class, 'comparison'])->name('dashboard.comparison');
-    Route::get('/dashboard/wayleaves', [DashboardController::class, 'wayleaves'])->name('dashboard.wayleaves');
-
     // ── API Endpoints ──────────────────────────────────────
     Route::prefix('api')->name('api.')->group(function () {
         Route::get('/kpi-trend', [DashboardController::class, 'kpiTrend'])->name('kpi.trend');
