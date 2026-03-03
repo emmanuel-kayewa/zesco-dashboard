@@ -16,18 +16,6 @@ class DashboardController extends Controller
     ) {}
 
     /**
-     * Wayleaves & Surveys Page.
-     */
-    public function wayleaves()
-    {
-        $directorates = Directorate::active()->ordered()->get();
-
-        return Inertia::render('Dashboard/Wayleaves', [
-            'directorates' => $directorates,
-        ]);
-    }
-
-    /**
      * Executive Overview Page.
      */
     public function index(Request $request)
