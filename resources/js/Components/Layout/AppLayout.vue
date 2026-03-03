@@ -50,12 +50,6 @@
                     :active="$page.url.includes('/comparison')"
                 />
                 <SidebarLink
-                    href="/dashboard/wayleaves"
-                    icon="map"
-                    :label="sidebarOpen ? 'Wayleaves & Surveys' : ''"
-                    :active="$page.url.includes('/wayleaves')"
-                />
-                <SidebarLink
                     href="/ai"
                     icon="ai"
                     :label="sidebarOpen ? 'AI Insights' : ''"
