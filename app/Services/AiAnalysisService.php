@@ -8,6 +8,7 @@ use App\Models\Kpi;
 use App\Models\KpiEntry;
 use App\Models\Incident;
 use App\Models\Risk;
+use App\Models\WayleaveEntry;
 use App\Services\AI\AiProviderManager;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -191,6 +192,8 @@ PROMPT;
         $systemPrompt = <<<'PROMPT'
 You are a helpful data analyst assistant for ZESCO Limited's executive dashboard.
 Answer the user's question using the provided dashboard data. Be specific with numbers, directorate names, and KPI values.
+
+The data includes KPI metrics, financial summaries, wayleave/survey processing data (applications received vs cleared by aspect/type), and recent alerts.
 
 If the question cannot be answered with the available data, say so clearly.
 
@@ -387,6 +390,7 @@ PROMPT;
             'organization_summary' => $summary,
             'directorates' => $kpiSummaries,
             'recent_alerts' => $alerts,
+            'wayleave_and_survey_data' => $this->gatherWayleaveContext(),
             'analysis_date' => now()->format('Y-m-d'),
         ];
     }
@@ -501,11 +505,15 @@ PROMPT;
             ->get(['type', 'severity', 'title', 'message'])
             ->toArray();
 
+        // Gather wayleave and survey data
+        $wayleaveData = $this->gatherWayleaveContext();
+
         return [
             'organization_summary' => $summary,
             'directorates' => $directorates,
             'available_kpis' => $kpis,
             'recent_alerts' => $recentAlerts,
+            'wayleave_and_survey_data' => $wayleaveData,
             'current_date' => now()->format('Y-m-d'),
         ];
     }
@@ -539,6 +547,61 @@ PROMPT;
             'alerts_this_week' => $newAlerts,
             'total_alerts' => count($newAlerts),
         ];
+    }
+
+    /**
+     * Gather wayleave and survey processing data across all directorates.
+     */
+    private function gatherWayleaveContext(): array
+    {
+        $categories = ['wayleave', 'survey'];
+        $result = [];
+
+        foreach ($categories as $category) {
+            // Get the latest report date for each directorate
+            $latestEntries = WayleaveEntry::where('category', $category)
+                ->selectRaw('directorate_id, MAX(report_date) as latest_date')
+                ->groupBy('directorate_id')
+                ->get();
+
+            foreach ($latestEntries as $entry) {
+                $directorate = Directorate::find($entry->directorate_id);
+                if (!$directorate) continue;
+
+                $rows = WayleaveEntry::where('directorate_id', $entry->directorate_id)
+                    ->where('category', $category)
+                    ->whereDate('report_date', $entry->latest_date)
+                    ->orderBy('aspect')
+                    ->get()
+                    ->map(fn(WayleaveEntry $e) => [
+                        'aspect' => $e->aspect,
+                        'received' => (int) $e->received,
+                        'cleared' => (int) $e->cleared,
+                        'pending' => (int) $e->received - (int) $e->cleared,
+                    ])
+                    ->toArray();
+
+                if (!empty($rows)) {
+                    $totalReceived = array_sum(array_column($rows, 'received'));
+                    $totalCleared = array_sum(array_column($rows, 'cleared'));
+
+                    $result[] = [
+                        'category' => $category,
+                        'directorate' => $directorate->name,
+                        'report_date' => $entry->latest_date,
+                        'total_received' => $totalReceived,
+                        'total_cleared' => $totalCleared,
+                        'total_pending' => $totalReceived - $totalCleared,
+                        'clearance_rate_pct' => $totalReceived > 0
+                            ? round(($totalCleared / $totalReceived) * 100, 1)
+                            : 0,
+                        'breakdown_by_aspect' => $rows,
+                    ];
+                }
+            }
+        }
+
+        return $result;
     }
 
     // ═══════════════════════════════════════════════════════════

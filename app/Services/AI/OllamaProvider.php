@@ -21,7 +21,8 @@ class OllamaProvider implements AiProviderInterface
 
     /**
      * Ensure the target model is loaded and any competing model is unloaded.
-     * Ollama hangs when swapping large models concurrently — this prevents that.
+     * Ollama can crash or become unresponsive when swapping large models,
+     * so we wait for stability after unloading before preloading.
      */
     private function ensureModelReady(string $model): void
     {
@@ -34,7 +35,7 @@ class OllamaProvider implements AiProviderInterface
             // If our model is already loaded, nothing to do
             if (in_array($model, $loaded)) return;
 
-            // Unload any other models first to free memory
+            // Unload any other models first to free VRAM
             foreach ($loaded as $loadedModel) {
                 if ($loadedModel !== $model) {
                     Log::info("Ollama: unloading {$loadedModel} to make room for {$model}");
@@ -45,9 +46,12 @@ class OllamaProvider implements AiProviderInterface
                 }
             }
 
-            // Pre-load the target model with keep_alive so it's warm
+            // Give Ollama time to release memory before loading a new model
+            sleep(5);
+
+            // Pre-load the target model — 32B+ models can take 3-5 minutes to load
             Log::info("Ollama: pre-loading {$model}");
-            Http::timeout(120)->post("{$this->baseUrl}/api/generate", [
+            Http::timeout(300)->post("{$this->baseUrl}/api/generate", [
                 'model' => $model,
                 'keep_alive' => '10m',
             ]);
@@ -58,14 +62,59 @@ class OllamaProvider implements AiProviderInterface
     }
 
     /**
+     * Wait for Ollama to become reachable, retrying a few times with backoff.
+     * Returns true if Ollama is up, false if all retries failed.
+     */
+    private function waitForOllama(int $maxRetries = 5, int $baseDelaySec = 5): bool
+    {
+        for ($i = 0; $i < $maxRetries; $i++) {
+            try {
+                $response = Http::timeout(5)->get("{$this->baseUrl}/api/tags");
+                if ($response->successful()) return true;
+            } catch (\Exception) {
+                // Ollama not ready yet
+            }
+
+            $delay = $baseDelaySec * ($i + 1);
+            Log::info("Ollama: not reachable, retrying in {$delay}s (attempt " . ($i + 1) . "/{$maxRetries})");
+            sleep($delay);
+        }
+
+        return false;
+    }
+
+    /**
      * Stream a chat response from Ollama, accumulating tokens into a single string.
      *
      * Using streaming prevents cURL "0 bytes received" timeouts because Ollama
      * sends tokens incrementally instead of buffering the entire response.
      * The read_timeout applies per-chunk, so long generations are fine as long
      * as tokens keep arriving.
+     *
+     * Will retry once on connection errors (e.g. after model swap).
      */
     private function streamChat(string $model, array $messages, array $ollamaOptions, ?string $format = null): string
+    {
+        $lastException = null;
+
+        for ($attempt = 1; $attempt <= 2; $attempt++) {
+            try {
+                return $this->doStreamChat($model, $messages, $ollamaOptions, $format);
+            } catch (\GuzzleHttp\Exception\ConnectException $e) {
+                $lastException = $e;
+                Log::warning("Ollama: connection failed on attempt {$attempt}, waiting for recovery", [
+                    'error' => $e->getMessage(),
+                ]);
+                if ($attempt < 2 && $this->waitForOllama()) {
+                    continue;
+                }
+            }
+        }
+
+        throw $lastException;
+    }
+
+    private function doStreamChat(string $model, array $messages, array $ollamaOptions, ?string $format = null): string
     {
         $payload = [
             'model' => $model,
@@ -142,6 +191,12 @@ class OllamaProvider implements AiProviderInterface
             $model = $options['model'] ?? $this->model;
             $this->ensureModelReady($model);
 
+            // If Ollama crashed during model swap, wait for it to recover
+            if (!$this->waitForOllama()) {
+                Log::error('Ollama: service unreachable after retries');
+                return '';
+            }
+
             return $this->streamChat($model, [
                 ['role' => 'system', 'content' => $systemPrompt],
                 ['role' => 'user', 'content' => $userPrompt],
@@ -163,6 +218,12 @@ class OllamaProvider implements AiProviderInterface
 
             $model = $options['model'] ?? $this->model;
             $this->ensureModelReady($model);
+
+            // If Ollama crashed during model swap, wait for it to recover
+            if (!$this->waitForOllama()) {
+                Log::error('Ollama: service unreachable after retries');
+                return [];
+            }
 
             $content = $this->streamChat($model, [
                 ['role' => 'system', 'content' => $systemPrompt . "\n\nYou MUST respond with valid JSON only. No markdown, no explanation outside the JSON."],

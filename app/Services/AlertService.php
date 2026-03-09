@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SendWhatsAppTemplateMessage;
 use App\Models\Alert;
 use App\Models\Directorate;
 use App\Models\Kpi;
@@ -65,6 +66,18 @@ class AlertService
                 $status = $kpi->getStatusForValue($latest->value);
 
                 if ($status === 'critical') {
+                    // Avoid duplicate alerts for the same KPI + directorate + day
+                    $existsToday = Alert::where('type', 'kpi_threshold')
+                        ->where('severity', 'critical')
+                        ->where('directorate_id', $directorate->id)
+                        ->whereDate('created_at', today())
+                        ->whereJsonContains('metadata->kpi_id', $kpi->id)
+                        ->exists();
+
+                    if ($existsToday) {
+                        continue;
+                    }
+
                     $alert = $this->createAlert(
                         'kpi_threshold',
                         'critical',
@@ -74,8 +87,21 @@ class AlertService
                         ['kpi_id' => $kpi->id, 'value' => $latest->value, 'threshold' => $kpi->critical_threshold]
                     );
                     $this->sendAlertEmail($alert, $directorate);
+                    $this->sendAlertWhatsApp($alert, $directorate);
                     $alertCount++;
                 } elseif ($status === 'warning') {
+                    // Avoid duplicate alerts for the same KPI + directorate + day
+                    $existsToday = Alert::where('type', 'kpi_threshold')
+                        ->where('severity', 'warning')
+                        ->where('directorate_id', $directorate->id)
+                        ->whereDate('created_at', today())
+                        ->whereJsonContains('metadata->kpi_id', $kpi->id)
+                        ->exists();
+
+                    if ($existsToday) {
+                        continue;
+                    }
+
                     $alert = $this->createAlert(
                         'kpi_threshold',
                         'warning',
@@ -90,6 +116,17 @@ class AlertService
                 // Check for significant drops
                 $changePercent = $latest->getChangePercentage();
                 if ($changePercent !== null && $changePercent < -config('dashboard.alerts.kpi_drop_threshold', 10)) {
+                    // Avoid duplicate anomaly alerts for the same KPI + directorate + day
+                    $existsToday = Alert::where('type', 'anomaly')
+                        ->where('directorate_id', $directorate->id)
+                        ->whereDate('created_at', today())
+                        ->whereJsonContains('metadata->kpi_id', $kpi->id)
+                        ->exists();
+
+                    if ($existsToday) {
+                        continue;
+                    }
+
                     $this->createAlert(
                         'anomaly',
                         'warning',
@@ -196,6 +233,7 @@ class AlertService
 
                 if ($severity === 'critical') {
                     $this->sendAlertEmail($alert, $directorate);
+                    $this->sendAlertWhatsApp($alert, $directorate);
                 }
 
                 $alertCount++;
@@ -261,6 +299,7 @@ class AlertService
                 );
 
                 $this->sendAlertEmail($alert, $directorate);
+                $this->sendAlertWhatsApp($alert, $directorate);
                 $alertCount++;
             }
         }
@@ -437,7 +476,7 @@ class AlertService
             if ($directorate) {
                 $dirUsers = User::where('directorate_id', $directorate->id)
                     ->where('is_active', true)
-                    ->whereHas('role', fn($q) => $q->whereIn('slug', ['admin', 'directorate_head']))
+                    ->whereHas('role', fn($q) => $q->whereIn('name', ['admin', 'directorate_head']))
                     ->get();
                 $recipients = $recipients->merge($dirUsers);
             }
@@ -445,7 +484,7 @@ class AlertService
             // Always include admins for critical alerts
             if ($alert->severity === 'critical') {
                 $admins = User::where('is_active', true)
-                    ->whereHas('role', fn($q) => $q->where('slug', 'admin'))
+                    ->whereHas('role', fn($q) => $q->where('name', 'admin'))
                     ->get();
                 $recipients = $recipients->merge($admins);
             }
@@ -454,9 +493,90 @@ class AlertService
 
             foreach ($recipients as $user) {
                 Mail::to($user->email)->queue(new KpiAlertMail($alert, $user));
+                // Send synchronously so alert emails work without a queue worker.
+                // Mail::to($user->email)->send(new KpiAlertMail($alert, $user));
             }
         } catch (\Exception $e) {
             Log::error('Failed to send alert email', [
+                'alert_id' => $alert->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Send an alert WhatsApp message to the relevant directorate head and admins.
+     */
+    private function sendAlertWhatsApp(Alert $alert, ?Directorate $directorate = null): void
+    {
+        if (!config('dashboard.alerts.whatsapp_notifications', false)) {
+            return;
+        }
+
+        $templateName = config('services.whatsapp.templates.alert');
+        if (empty($templateName)) {
+            Log::warning('WhatsApp alert template not configured; skipping WhatsApp send', [
+                'alert_id' => $alert->id,
+            ]);
+            return;
+        }
+
+        try {
+            $recipients = collect();
+
+            if ($directorate) {
+                $dirUsers = User::where('directorate_id', $directorate->id)
+                    ->where('is_active', true)
+                    ->whereHas('role', fn($q) => $q->whereIn('name', ['admin', 'directorate_head']))
+                    ->get();
+                $recipients = $recipients->merge($dirUsers);
+            }
+
+            if ($alert->severity === 'critical') {
+                $admins = User::where('is_active', true)
+                    ->whereHas('role', fn($q) => $q->where('name', 'admin'))
+                    ->get();
+                $recipients = $recipients->merge($admins);
+            }
+
+            $recipients = $recipients
+                ->unique('id')
+                ->filter(fn(User $user) => $user->whatsapp_opt_in && !empty($user->whatsapp_phone));
+
+            if ($recipients->isEmpty()) {
+                return;
+            }
+
+            $dashboardUrl = rtrim((string) config('app.url'), '/');
+            $bodyParameters = [
+                $alert->title,
+                $alert->message,
+                $dashboardUrl,
+            ];
+
+            $buttonUrlParameter = config('services.whatsapp.url_button.enabled', false)
+                ? (string) config('services.whatsapp.url_button.parameter', '/dashboard')
+                : null;
+            $buttonIndex = (int) config('services.whatsapp.url_button.index', 0);
+
+            foreach ($recipients as $user) {
+                SendWhatsAppTemplateMessage::dispatch(
+                    to: $user->whatsapp_phone,
+                    templateName: $templateName,
+                    bodyParameters: $bodyParameters,
+                    languageCode: 'en_US',
+                    buttonUrlParameter: $buttonUrlParameter,
+                    buttonIndex: $buttonIndex,
+                    context: [
+                        'alert_id' => $alert->id,
+                        'user_id' => $user->id,
+                        'channel' => 'whatsapp',
+                        'type' => 'alert',
+                    ],
+                );
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to send alert WhatsApp message', [
                 'alert_id' => $alert->id,
                 'error' => $e->getMessage(),
             ]);
