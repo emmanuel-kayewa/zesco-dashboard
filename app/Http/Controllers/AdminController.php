@@ -66,6 +66,8 @@ class AdminController extends Controller
             'email' => 'required|email|unique:users,email',
             'role_id' => 'required|exists:roles,id',
             'directorate_id' => 'nullable|exists:directorates,id',
+            'whatsapp_opt_in' => 'sometimes|boolean',
+            'whatsapp_phone' => ['nullable', 'string', 'max:32', 'regex:/^[0-9+()\-\s]{8,32}$/'],
         ]);
 
         $user = User::create([
@@ -75,6 +77,8 @@ class AdminController extends Controller
             'directorate_id' => $request->directorate_id,
             'is_active' => true,
             'email_verified_at' => now(),
+            'whatsapp_opt_in' => (bool) $request->boolean('whatsapp_opt_in'),
+            'whatsapp_phone' => $request->whatsapp_phone,
         ]);
 
         AuditLog::log('create', 'User created by admin', $user);
@@ -91,11 +95,13 @@ class AdminController extends Controller
             'role_id' => 'required|exists:roles,id',
             'directorate_id' => 'nullable|exists:directorates,id',
             'is_active' => 'required|boolean',
+            'whatsapp_opt_in' => 'sometimes|boolean',
+            'whatsapp_phone' => ['nullable', 'string', 'max:32', 'regex:/^[0-9+()\-\s]{8,32}$/'],
         ]);
 
         $old = $user->toArray();
 
-        $user->update($request->only('role_id', 'directorate_id', 'is_active'));
+        $user->update($request->only('role_id', 'directorate_id', 'is_active', 'whatsapp_opt_in', 'whatsapp_phone'));
 
         AuditLog::log('update', 'User updated by admin', $user, $old, $user->fresh()->toArray());
 
