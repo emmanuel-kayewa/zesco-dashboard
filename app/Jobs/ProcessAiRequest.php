@@ -34,7 +34,18 @@ class ProcessAiRequest implements ShouldQueue
     /**
      * The number of times the job may be attempted.
      */
-    public int $tries = 1;
+    public int $tries = 3;
+
+    /**
+     * The number of seconds to wait before retrying the job.
+     * Backoff: 30s, 60s, 120s — gives Ollama time to finish loading the model.
+     *
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
+        return [30, 60, 120];
+    }
 
     public function __construct(
         public string $taskId,
