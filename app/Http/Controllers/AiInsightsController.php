@@ -83,6 +83,29 @@ class AiInsightsController extends Controller
     }
 
     /**
+     * Enforce Planning & Projects (PP) access rules for PP-scoped AI endpoints.
+     * Mirrors PP dashboard access: only PP directorate head or admin.
+     */
+    private function enforcePpAccess(Request $request): void
+    {
+        $user = $request->user();
+        if (!$user) {
+            abort(401);
+        }
+
+        if ($user->isAdmin()) {
+            return;
+        }
+
+        $isDirectorateHead = ($user->role?->name ?? null) === 'directorate_head';
+        $isPp = ($user->directorate?->code ?? null) === 'PP';
+
+        if (!$isDirectorateHead || !$isPp) {
+            abort(403, 'You do not have access to PP portfolio AI.');
+        }
+    }
+
+    /**
      * Generate executive AI insights.
      */
     public function executiveInsights(Request $request, AiAnalysisService $aiService): JsonResponse
@@ -211,6 +234,60 @@ class AiInsightsController extends Controller
 
         try {
             $answer = $aiService->answerQuery($request->question);
+        } catch (\Throwable $e) {
+            report($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'AI analysis failed: ' . $e->getMessage(),
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => !empty($answer),
+            'result' => $answer,
+        ]);
+    }
+
+    /**
+     * Natural language query, scoped to Planning & Projects (PP) portfolio pages.
+     * POST /api/ai/pp/query
+     */
+    public function ppQuery(Request $request, AiAnalysisService $aiService): JsonResponse
+    {
+        $this->enforcePpAccess($request);
+
+        $request->validate([
+            'question' => 'required|string|max:1000',
+            'scope' => 'required|array',
+            'scope.type' => 'required|string|max:50',
+            'scope.directorate_id' => 'nullable|integer|exists:directorates,id',
+            'scope.pp_project_id' => 'nullable|integer|exists:pp_projects,id',
+            'scope.filters' => 'nullable|array',
+            'history' => 'nullable|array|max:12',
+            'history.*.role' => 'required_with:history|string|in:user,assistant',
+            'history.*.content' => 'required_with:history|string|max:1000',
+        ]);
+
+        if (!$aiService->isAvailable()) {
+            return response()->json(['success' => false, 'message' => 'AI service unavailable.'], 503);
+        }
+
+        $scope = $request->input('scope', []);
+        $question = $request->string('question')->toString();
+        $history = $request->input('history', []);
+
+        if ($this->shouldAsync()) {
+            return $this->dispatchAiTask('ppQuery', [
+                'scope' => $scope,
+                'question' => $question,
+                'history' => $history,
+            ]);
+        }
+
+        set_time_limit(0);
+
+        try {
+            $answer = $aiService->answerPpScopedQuery($scope, $question, $history);
         } catch (\Throwable $e) {
             report($e);
             return response()->json([
