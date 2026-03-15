@@ -18,6 +18,8 @@ if (!Highcharts.__zescoHighcharts3d && typeof init3d === 'function') {
     Highcharts.__zescoHighcharts3d = true;
 }
 
+const emit = defineEmits(['chart-click']);
+
 const props = defineProps({
     data: { type: Array, default: () => [] },       // [{ name, value, color? }]
     colors: {
@@ -30,6 +32,7 @@ const props = defineProps({
     depth: { type: Number, default: 45 },
     alpha: { type: Number, default: 45 },
     beta: { type: Number, default: 0 },
+    showLegend: { type: Boolean, default: true },
 });
 
 const chartEl = ref(null);
@@ -73,6 +76,13 @@ function buildOptions() {
                 depth: props.depth,
                 allowPointSelect: true,
                 cursor: 'pointer',
+                point: {
+                    events: {
+                        click: function () {
+                            emit('chart-click', { name: this.name, value: this.y, percentage: this.percentage });
+                        },
+                    },
+                },
                 dataLabels: {
                     enabled: true,
                     format: '<b>{point.name}</b>: {point.y} ({point.percentage:.1f}%)',
@@ -90,6 +100,7 @@ function buildOptions() {
             },
         },
         legend: {
+            enabled: props.showLegend,
             align: 'center',
             verticalAlign: 'bottom',
             layout: 'horizontal',
@@ -120,7 +131,7 @@ onMounted(() => {
     });
 });
 
-watch(() => [props.data, props.colors, props.depth, props.alpha, isDark.value], () => {
+watch(() => [props.data, props.colors, props.depth, props.alpha, props.showLegend, isDark.value], () => {
     nextTick(() => initChart());
 }, { deep: true });
 
