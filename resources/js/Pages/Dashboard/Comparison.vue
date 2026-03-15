@@ -2,13 +2,10 @@
     <AppLayout :directorates="directorates">
         <template #title>Directorate Comparison</template>
 
-        <nav class="text-sm mb-6 no-print">
-            <ol class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                <li><Link href="/dashboard" class="hover:text-zesco-600">Dashboard</Link></li>
-                <li>/</li>
-                <li class="font-medium text-gray-900 dark:text-white">Comparison</li>
-            </ol>
-        </nav>
+        <Breadcrumb :items="[
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'Comparison', current: true }
+        ]" />
 
         <!-- Metric Selector -->
         <div class="flex flex-wrap items-end gap-4 mb-6 no-print">
@@ -40,7 +37,7 @@
 
         <!-- Comparison Table -->
         <Card title="Detailed Comparison">
-            <div class="overflow-x-auto -mx-6">
+            <div class="overflow-x-auto">
                 <table class="w-full text-sm min-w-[640px]">
                     <thead>
                         <tr class="border-b border-gray-200 dark:border-gray-700">
@@ -93,6 +90,7 @@
 import { ref, computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
+import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import Card from '@/Components/UI/Card.vue';
 import Select from '@/Components/UI/Select.vue';
 import BarChart from '@/Components/Charts/BarChart.vue';
