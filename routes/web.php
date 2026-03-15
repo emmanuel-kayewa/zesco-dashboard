@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AlertController;
 use App\Http\Controllers\AiInsightsController;
 use App\Http\Controllers\Auth\AzureAdController;
 use App\Http\Controllers\Auth\MagicLinkController;
@@ -12,6 +13,15 @@ use App\Http\Controllers\KpiEntryController;
 use App\Http\Controllers\KpiImportController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RiskController;
+use App\Http\Controllers\WayleaveEntryController;
+use App\Http\Controllers\PpDashboardController;
+use App\Http\Controllers\PpProjectController;
+use App\Http\Controllers\PpMilestoneController;
+use App\Http\Controllers\PpFinancialController;
+use App\Http\Controllers\PpRiskController;
+use App\Http\Controllers\PpSafeguardController;
+use App\Http\Controllers\PpProgrammeOutputController;
+use App\Http\Controllers\PpGridImpactStudyController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -65,6 +75,11 @@ Route::middleware(app()->environment('local')
     // ── API Endpoints ──────────────────────────────────────
     Route::prefix('api')->name('api.')->group(function () {
         Route::get('/kpi-trend', [DashboardController::class, 'kpiTrend'])->name('kpi.trend');
+
+        // Alerts (navbar notification drawer)
+        Route::get('/alerts/unread', [AlertController::class, 'unread'])->name('alerts.unread');
+        Route::post('/alerts/{alert}/read', [AlertController::class, 'markRead'])->name('alerts.read');
+        Route::post('/alerts/{alert}/dismiss', [AlertController::class, 'dismiss'])->name('alerts.dismiss');
     });
 
     // ── Export ──────────────────────────────────────────────
@@ -82,6 +97,39 @@ Route::middleware(app()->environment('local')
         Route::resource('projects', ProjectController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::resource('risks', RiskController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::resource('incidents', IncidentController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::resource('wayleave-entries', WayleaveEntryController::class)->only(['index', 'store', 'update', 'destroy']);
+    });
+
+    // ── PP Directorate Portfolio Management ─────────────────
+    Route::middleware(['role:directorate_head,admin', 'throttle:data-entry'])->prefix('pp')->name('pp.')->group(function () {
+        // PP Dashboard (drill-down)
+        Route::get('/dashboard', [PpDashboardController::class, 'overview'])->name('dashboard');
+        Route::get('/dashboard/explore', [PpDashboardController::class, 'explore'])->name('dashboard.explore');
+        Route::get('/dashboard/grid-studies', [PpDashboardController::class, 'gridStudies'])->name('dashboard.grid-studies');
+        Route::get('/dashboard/projects/{ppProject}', [PpDashboardController::class, 'projectDetail'])->name('dashboard.project');
+
+        Route::get('/', [PpProjectController::class, 'landing'])->name('landing');
+        Route::resource('projects', PpProjectController::class)->only(['index', 'store', 'update', 'destroy'])->names([
+            'index' => 'projects.index', 'store' => 'projects.store', 'update' => 'projects.update', 'destroy' => 'projects.destroy',
+        ]);
+        Route::resource('milestones', PpMilestoneController::class)->only(['index', 'store', 'update', 'destroy'])->names([
+            'index' => 'milestones.index', 'store' => 'milestones.store', 'update' => 'milestones.update', 'destroy' => 'milestones.destroy',
+        ]);
+        Route::resource('financials', PpFinancialController::class)->only(['index', 'store', 'update', 'destroy'])->names([
+            'index' => 'financials.index', 'store' => 'financials.store', 'update' => 'financials.update', 'destroy' => 'financials.destroy',
+        ]);
+        Route::resource('risks', PpRiskController::class)->only(['index', 'store', 'update', 'destroy'])->names([
+            'index' => 'risks.index', 'store' => 'risks.store', 'update' => 'risks.update', 'destroy' => 'risks.destroy',
+        ]);
+        Route::resource('safeguards', PpSafeguardController::class)->only(['index', 'store', 'update', 'destroy'])->names([
+            'index' => 'safeguards.index', 'store' => 'safeguards.store', 'update' => 'safeguards.update', 'destroy' => 'safeguards.destroy',
+        ]);
+        Route::resource('programme-outputs', PpProgrammeOutputController::class)->only(['index', 'store', 'update', 'destroy'])->names([
+            'index' => 'programme-outputs.index', 'store' => 'programme-outputs.store', 'update' => 'programme-outputs.update', 'destroy' => 'programme-outputs.destroy',
+        ]);
+        Route::resource('grid-impact-studies', PpGridImpactStudyController::class)->only(['index', 'store', 'update', 'destroy'])->names([
+            'index' => 'grid-impact-studies.index', 'store' => 'grid-impact-studies.store', 'update' => 'grid-impact-studies.update', 'destroy' => 'grid-impact-studies.destroy',
+        ]);
     });
 
     // ── AI Insights ──────────────────────────────────────────
@@ -95,6 +143,7 @@ Route::middleware(app()->environment('local')
         Route::post('/explain-anomaly', [AiInsightsController::class, 'explainAnomaly'])->name('explain-anomaly');
         Route::post('/recommendations', [AiInsightsController::class, 'recommendations'])->name('recommendations');
         Route::post('/query', [AiInsightsController::class, 'query'])->name('query');
+        Route::post('/pp/query', [AiInsightsController::class, 'ppQuery'])->name('pp.query');
         Route::post('/predict-breach', [AiInsightsController::class, 'predictBreach'])->name('predict-breach');
         Route::post('/clear-cache', [AiInsightsController::class, 'clearCache'])->name('clear-cache');
         Route::get('/task/{taskId}', [AiInsightsController::class, 'pollTask'])->name('task.poll');
