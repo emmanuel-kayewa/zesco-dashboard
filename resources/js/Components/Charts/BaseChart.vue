@@ -1,22 +1,22 @@
 <template>
-    <div ref="chartEl" :style="{ width: '100%', height: height }" class="echarts-container"></div>
+    <div ref="chartEl" :style="{ width: '100%', height: computedHeight }" class="echarts-container"></div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import * as echarts from 'echarts/core';
-import { LineChart, BarChart, PieChart, GaugeChart, HeatmapChart, ScatterChart } from 'echarts/charts';
+import { LineChart, BarChart, PieChart, GaugeChart, HeatmapChart, ScatterChart, MapChart } from 'echarts/charts';
 import {
     TitleComponent, TooltipComponent, LegendComponent, GridComponent,
-    DataZoomComponent, ToolboxComponent, VisualMapComponent
+    DataZoomComponent, ToolboxComponent, VisualMapComponent, GeoComponent
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import { useDarkMode } from '@/Composables/useDarkMode';
 
 echarts.use([
-    LineChart, BarChart, PieChart, GaugeChart, HeatmapChart, ScatterChart,
+    LineChart, BarChart, PieChart, GaugeChart, HeatmapChart, ScatterChart, MapChart,
     TitleComponent, TooltipComponent, LegendComponent, GridComponent,
-    DataZoomComponent, ToolboxComponent, VisualMapComponent,
+    DataZoomComponent, ToolboxComponent, VisualMapComponent, GeoComponent,
     CanvasRenderer,
 ]);
 
@@ -25,13 +25,34 @@ const props = defineProps({
     height: { type: String, default: '320px' },
     theme: { type: String, default: null },
     autoResize: { type: Boolean, default: true },
+    responsive: { type: Boolean, default: true },
 });
 
-const emit = defineEmits(['chart-ready']);
+const emit = defineEmits(['chart-ready', 'chart-click']);
 const chartEl = ref(null);
+const windowWidth = ref(window.innerWidth);
 let chart = null;
 let resizeObserver = null;
 const { isDark } = useDarkMode();
+
+/** Calculate responsive height based on viewport width */
+const computedHeight = computed(() => {
+    if (!props.responsive) return props.height;
+    
+    // Parse the height prop to get base height value
+    const baseHeight = parseInt(props.height) || 320;
+    
+    // On mobile (< 640px), reduce height to fit screen better
+    if (windowWidth.value < 640) {
+        return Math.min(baseHeight, 280) + 'px';
+    }
+    // On tablet (640-1024px), use moderate height
+    if (windowWidth.value < 1024) {
+        return Math.min(baseHeight, 300) + 'px';
+    }
+    // On desktop, use full height
+    return props.height;
+});
 
 /** Build the dark mode overlay for chart options */
 function getDarkOverrides() {
@@ -50,12 +71,20 @@ function initChart() {
     if (chart) chart.dispose();
     chart = echarts.init(chartEl.value, isDark.value ? 'dark' : props.theme);
     chart.setOption({ ...props.option, ...getDarkOverrides() });
+    chart.on('click', (params) => emit('chart-click', params));
     emit('chart-ready', chart);
+}
+
+function handleWindowResize() {
+    windowWidth.value = window.innerWidth;
 }
 
 onMounted(() => {
     nextTick(() => {
         initChart();
+
+        // Listen to window resize for responsive height
+        window.addEventListener('resize', handleWindowResize);
 
         if (props.autoResize && chartEl.value) {
             resizeObserver = new ResizeObserver(() => {
@@ -88,6 +117,7 @@ watch(isDark, () => {
 });
 
 onUnmounted(() => {
+    window.removeEventListener('resize', handleWindowResize);
     resizeObserver?.disconnect();
     chart?.dispose();
 });
