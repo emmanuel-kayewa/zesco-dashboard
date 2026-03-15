@@ -44,15 +44,15 @@ const props = defineProps({
 defineEmits(['click']);
 
 const buttonClasses = computed(() => {
-    const baseClasses = 'font-medium focus:outline-none focus:ring-4 transition-colors duration-150';
+    const baseClasses = 'font-medium focus:outline-none focus:ring-4 transition-colors duration-150 whitespace-nowrap';
     
-    // Size classes
+    // Size classes - matching form control heights for better alignment
     const sizeClasses = {
-        xs: 'px-3 py-2 text-xs',
-        sm: 'px-3 py-2 text-sm',
-        md: 'px-5 py-2.5 text-sm',
-        lg: 'px-5 py-3 text-base',
-        xl: 'px-6 py-3.5 text-base'
+        xs: 'h-8 px-3 text-xs',
+        sm: 'h-9 px-3 text-sm',
+        md: 'h-10 px-5 text-sm',
+        lg: 'h-12 px-5 text-base',
+        xl: 'h-14 px-6 text-base'
     };
     
     // Border radius
