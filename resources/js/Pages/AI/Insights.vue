@@ -2,13 +2,10 @@
     <AppLayout :directorates="directorates">
         <template #title>AI Insights</template>
 
-        <nav class="text-sm mb-6">
-            <ol class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                <li><Link href="/dashboard" class="hover:text-zesco-600">Dashboard</Link></li>
-                <li>/</li>
-                <li class="font-medium text-gray-900 dark:text-white">AI Insights</li>
-            </ol>
-        </nav>
+        <Breadcrumb :items="[
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'AI Insights', current: true }
+        ]" />
 
         <!-- AI Status Banner -->
         <div v-if="!aiAvailable" class="mb-6 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-4">
@@ -183,6 +180,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
+import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import Card from '@/Components/UI/Card.vue';
 
 const props = defineProps({
