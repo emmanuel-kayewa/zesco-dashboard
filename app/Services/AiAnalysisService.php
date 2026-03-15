@@ -7,6 +7,7 @@ use App\Models\Directorate;
 use App\Models\Kpi;
 use App\Models\KpiEntry;
 use App\Models\Incident;
+use App\Models\PpProject;
 use App\Models\Risk;
 use App\Models\WayleaveEntry;
 use App\Services\AI\AiProviderManager;
@@ -18,11 +19,13 @@ class AiAnalysisService
 {
     private AiProviderManager $ai;
     private DashboardService $dashboard;
+    private PpDashboardService $ppDashboard;
 
-    public function __construct(AiProviderManager $ai, DashboardService $dashboard)
+    public function __construct(AiProviderManager $ai, DashboardService $dashboard, PpDashboardService $ppDashboard)
     {
         $this->ai = $ai;
         $this->dashboard = $dashboard;
+        $this->ppDashboard = $ppDashboard;
     }
 
     /**
@@ -209,6 +212,196 @@ PROMPT;
         $userPrompt = "QUESTION: {$question}\n\nAVAILABLE DATA:\n" . json_encode($context);
 
         return $this->ai->provider()->chatWithJson($systemPrompt, $userPrompt);
+    }
+
+    /**
+     * Answer a natural language question scoped to PP portfolio data.
+     *
+     * @param  array  $scope  Expected keys: type, directorate_id?, filters?, pp_project_id?
+     * @param  array  $history  Optional array of { role: user|assistant, content: string }
+     */
+    public function answerPpScopedQuery(array $scope, string $question, array $history = []): array
+    {
+        $context = $this->gatherPpQueryContext($scope);
+
+        $systemPrompt = <<<'PROMPT'
+You are a helpful data analyst assistant for ZESCO Limited's Planning & Projects (PP) portfolio dashboard.
+
+You MUST answer ONLY using the provided PP portfolio data (and the current PP scope). Do not invent figures.
+If the user asks to compare PP to other directorates or asks about non-PP directorates, say you cannot do cross-directorate comparisons in this view and suggest using the AI Insights page instead.
+
+Return valid JSON:
+{
+  "answer": "your detailed answer to the question",
+  "data_points": ["key data point 1", "key data point 2"],
+  "confidence": "high|medium|low",
+  "follow_up_suggestions": ["related question the user might want to ask"]
+}
+PROMPT;
+
+        $historyText = $this->formatChatHistoryForPrompt($history, 10);
+
+        $userPrompt = "SCOPE:\n" . json_encode($context['scope'] ?? new \stdClass()) .
+            "\n\nPP DASHBOARD DATA:\n" . json_encode($context['data'] ?? new \stdClass()) .
+            ($historyText ? "\n\nCONVERSATION SO FAR:\n{$historyText}" : '') .
+            "\n\nQUESTION: {$question}";
+
+        return $this->ai->provider()->chatWithJson($systemPrompt, $userPrompt, [
+            'temperature' => 0.2,
+            'max_tokens' => 4096,
+        ]);
+    }
+
+    private function formatChatHistoryForPrompt(array $history, int $maxMessages = 10): string
+    {
+        if (empty($history)) {
+            return '';
+        }
+
+        $clean = [];
+        foreach ($history as $m) {
+            if (!is_array($m)) continue;
+            $role = $m['role'] ?? null;
+            $content = $m['content'] ?? null;
+            if (!in_array($role, ['user', 'assistant'], true)) continue;
+            if (!is_string($content) || $content === '') continue;
+            $clean[] = [
+                'role' => $role,
+                'content' => mb_substr($content, 0, 1000),
+            ];
+        }
+
+        $clean = array_slice($clean, max(0, count($clean) - $maxMessages));
+
+        $lines = [];
+        foreach ($clean as $m) {
+            $label = $m['role'] === 'user' ? 'User' : 'Assistant';
+            $lines[] = $label . ': ' . str_replace(["\r\n", "\n"], ' ', $m['content']);
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Gather PP context for the given scope. Keeps the payload compact.
+     */
+    private function gatherPpQueryContext(array $scope): array
+    {
+        $type = (string)($scope['type'] ?? 'pp_portfolio');
+        $filters = is_array($scope['filters'] ?? null) ? $scope['filters'] : [];
+        $ppProjectId = isset($scope['pp_project_id']) ? (int)$scope['pp_project_id'] : null;
+
+        $cacheKey = 'ai_pp_context:' . sha1(json_encode([
+            'type' => $type,
+            'filters' => $filters,
+            'pp_project_id' => $ppProjectId,
+        ]));
+
+        $ttlMinutes = (int)config('dashboard.ai.cache.pp_context', 10);
+
+        $data = Cache::remember($cacheKey, now()->addMinutes($ttlMinutes), function () use ($type, $filters, $ppProjectId) {
+            if ($type === 'pp_project' && $ppProjectId) {
+                $project = PpProject::find($ppProjectId);
+                if (!$project) {
+                    return ['type' => $type, 'project' => null];
+                }
+
+                $detail = $this->ppDashboard->getProjectDetail($project);
+
+                return [
+                    'type' => $type,
+                    'project' => [
+                        'project' => $detail['project'] ?? null,
+                        'summary' => $detail['summary'] ?? null,
+                        'milestones' => array_slice($detail['milestones'] ?? [], 0, 12),
+                        'financials' => array_slice($detail['financials'] ?? [], 0, 10),
+                        'risks' => array_slice($detail['risks'] ?? [], 0, 10),
+                        'safeguards' => array_slice($detail['safeguards'] ?? [], 0, 10),
+                        'gridStudies' => array_slice($detail['gridStudies'] ?? [], 0, 10),
+                    ],
+                ];
+            }
+
+            if ($type === 'pp_grid_studies') {
+                $grid = $this->ppDashboard->getGridStudiesData($filters);
+                return [
+                    'type' => $type,
+                    'appliedFilters' => $grid['appliedFilters'] ?? [],
+                    'kpis' => $grid['kpis'] ?? null,
+                    'stageFunnel' => $grid['stageFunnel'] ?? null,
+                    'techPie' => array_slice($grid['techPie'] ?? [], 0, 12),
+                    'areaBreakdown' => array_slice($grid['areaBreakdown'] ?? [], 0, 12),
+                    'typeBreakdown' => array_slice($grid['typeBreakdown'] ?? [], 0, 12),
+                    'studiesSample' => array_slice($grid['studies'] ?? [], 0, 25),
+                    'totalCount' => $grid['totalCount'] ?? null,
+                ];
+            }
+
+            if ($type === 'pp_explorer') {
+                $explorer = $this->ppDashboard->getExplorerData($filters);
+                $projects = $explorer['projects'] ?? [];
+                if (is_array($projects)) {
+                    $projects = array_slice($projects, 0, 25);
+                }
+
+                $breakdowns = $explorer['breakdowns'] ?? [];
+                if (is_array($breakdowns)) {
+                    // Keep only small portions of each breakdown
+                    foreach ($breakdowns as $k => $v) {
+                        if (isset($v['data']) && is_array($v['data'])) {
+                            $breakdowns[$k]['data'] = array_slice($v['data'], 0, 12);
+                        }
+                    }
+                }
+
+                return [
+                    'type' => $type,
+                    'appliedFilters' => $explorer['appliedFilters'] ?? [],
+                    'kpis' => $explorer['kpis'] ?? null,
+                    'totalCount' => $explorer['totalCount'] ?? null,
+                    'breakdowns' => $breakdowns,
+                    'projectsSample' => $projects,
+                    'risksByCategory' => array_slice($explorer['risksByCategory'] ?? [], 0, 10),
+                    'risksByLevel' => array_slice($explorer['risksByLevel'] ?? [], 0, 10),
+                ];
+            }
+
+            // Default: portfolio overview
+            $overview = $this->ppDashboard->getOverview();
+            return [
+                'type' => 'pp_portfolio',
+                'kpis' => $overview['kpis'] ?? null,
+                'sectorCards' => array_slice($overview['sectorCards'] ?? [], 0, 10),
+                'sectorBreakdown' => array_slice($overview['sectorBreakdown'] ?? [], 0, 10),
+                'statusBreakdown' => array_slice($overview['statusBreakdown'] ?? [], 0, 10),
+                'ragBreakdown' => array_slice($overview['ragBreakdown'] ?? [], 0, 10),
+                'programmeBreakdown' => array_slice($overview['programmeBreakdown'] ?? [], 0, 10),
+                'gridStudiesSummary' => $overview['gridStudiesSummary'] ?? null,
+                'recentIssues' => array_slice($overview['recentIssues'] ?? [], 0, 10),
+            ];
+        });
+
+        // If the context grows too large, reduce further.
+        $encoded = json_encode($data);
+        if (is_string($encoded) && strlen($encoded) > 60000) {
+            if (isset($data['projectsSample']) && is_array($data['projectsSample'])) {
+                $data['projectsSample'] = array_slice($data['projectsSample'], 0, 10);
+            }
+            if (isset($data['studiesSample']) && is_array($data['studiesSample'])) {
+                $data['studiesSample'] = array_slice($data['studiesSample'], 0, 10);
+            }
+        }
+
+        return [
+            'scope' => [
+                'type' => $type,
+                'filters' => $filters,
+                'pp_project_id' => $ppProjectId,
+            ],
+            'data' => $data,
+            'generated_at' => now()->toISOString(),
+            'provider' => $this->ai->getIdentifier(),
+        ];
     }
 
     // ═══════════════════════════════════════════════════════════
