@@ -96,4 +96,28 @@ class PpDashboardController extends Controller
             'backFilters'     => $backFilters,
         ]);
     }
+
+    /**
+     * Grid Impact Studies — Dedicated detail page with drillable charts.
+     */
+    public function gridStudies(Request $request)
+    {
+        $ppDir = $this->enforcePpAccess($request);
+
+        $filters = [];
+        foreach (['study_type', 'technology', 'project_area', 'stage'] as $key) {
+            $val = $request->get($key);
+            if ($val) {
+                $filters[$key] = $val;
+            }
+        }
+
+        $data = $this->service->getGridStudiesData($filters);
+
+        return Inertia::render('Pp/Dashboard/GridStudies', [
+            'gridData'     => $data,
+            'directorate'  => $ppDir,
+            'directorates' => Directorate::active()->ordered()->get(),
+        ]);
+    }
 }
