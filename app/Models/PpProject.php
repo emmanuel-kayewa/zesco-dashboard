@@ -24,6 +24,7 @@ class PpProject extends Model
         'cost_usd',
         'cost_zmw',
         'capacity_mw',
+        'commissioned_mw',
         'progress_pct',
         'cod_planned',
         'key_issue_summary',
@@ -37,6 +38,7 @@ class PpProject extends Model
         'cost_usd'         => 'decimal:2',
         'cost_zmw'         => 'decimal:2',
         'capacity_mw'      => 'decimal:3',
+        'commissioned_mw'  => 'decimal:3',
         'progress_pct'     => 'decimal:2',
         'cod_planned'      => 'date',
         'last_update_date' => 'date',
@@ -67,6 +69,11 @@ class PpProject extends Model
     public function safeguards(): HasMany
     {
         return $this->hasMany(PpSafeguard::class);
+    }
+
+    public function gridImpactStudies(): HasMany
+    {
+        return $this->hasMany(PpGridImpactStudy::class);
     }
 
     // ── Scopes ─────────────────────────────────────────────
