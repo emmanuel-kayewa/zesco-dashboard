@@ -1,6 +1,6 @@
 <template>
     <div class="card">
-        <div class="card-header flex items-center justify-between">
+        <div class="card-header flex flex-wrap items-center justify-between gap-2">
             <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ title }}</h3>
             <slot name="actions" />
         </div>
