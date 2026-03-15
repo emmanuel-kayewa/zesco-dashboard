@@ -2,15 +2,11 @@
     <AppLayout :directorates="directorates">
         <template #title>Audit Logs</template>
 
-        <nav class="text-sm mb-6">
-            <ol class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                <li><Link href="/dashboard" class="hover:text-zesco-600">Dashboard</Link></li>
-                <li>/</li>
-                <li><Link href="/admin" class="hover:text-zesco-600">Admin</Link></li>
-                <li>/</li>
-                <li class="font-medium text-gray-900 dark:text-white">Audit Logs</li>
-            </ol>
-        </nav>
+        <Breadcrumb :items="[
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'Admin', href: '/admin' },
+            { label: 'Audit Logs', current: true }
+        ]" />
 
         <!-- Filters -->
         <div class="flex flex-wrap items-end gap-3 mb-6 no-print">
@@ -40,7 +36,7 @@
         </div>
 
         <Card title="Activity Log">
-            <div class="overflow-x-auto -mx-6">
+            <div class="overflow-x-auto">
                 <table class="w-full text-sm min-w-[640px]">
                     <thead>
                         <tr class="border-b border-gray-200 dark:border-gray-700">
@@ -57,16 +53,7 @@
                             <td class="py-2 px-3 text-gray-400 text-xs whitespace-nowrap">{{ log.created_at }}</td>
                             <td class="py-2 px-3 font-medium text-gray-900 dark:text-white text-xs whitespace-nowrap">{{ log.user?.name || 'System' }}</td>
                             <td class="py-2 px-3">
-                                <span class="text-xs px-2 py-0.5 rounded-full font-medium"
-                                      :class="{
-                                          'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': log.action === 'create',
-                                          'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': log.action === 'update',
-                                          'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400': log.action === 'delete',
-                                          'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400': log.action === 'login',
-                                          'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400': !['create','update','delete','login'].includes(log.action),
-                                      }">
-                                    {{ log.action }}
-                                </span>
+                                <Badge variant="filled" :color="getAuditActionColor(log.action)" :label="log.action" />
                             </td>
                             <td class="py-2 px-3 text-gray-500 text-xs hidden md:table-cell">{{ log.entity_type }}{{ log.entity_id ? ` #${log.entity_id}` : '' }}</td>
                             <td class="py-2 px-3 text-gray-600 dark:text-gray-400 text-xs max-w-[200px] truncate" :title="log.description">{{ log.description }}</td>
@@ -94,10 +81,15 @@
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
+import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import Card from '@/Components/UI/Card.vue';
 import Select from '@/Components/UI/Select.vue';
 import Input from '@/Components/UI/Input.vue';
 import Button from '@/Components/UI/Button.vue';
+import Badge from '@/Components/UI/Badge.vue';
+import { useBadges } from '@/Composables/useBadges';
+
+const { getAuditActionColor } = useBadges();
 
 const props = defineProps({
     logs: { type: Object, default: () => ({ data: [], links: [] }) },
