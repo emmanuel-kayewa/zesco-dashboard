@@ -5,56 +5,59 @@
     >
         <template #title>{{ projectData.project.name }}</template>
 
-        <Breadcrumb :items="breadcrumbItems" />
+        <!-- Header only shown when NOT in directorate sidebar mode -->
+        <template v-if="!directorateStore.activeDirectorate">
+            <Breadcrumb :items="breadcrumbItems" />
 
-        <PageHeader stackAt="lg" alignAt="start" class="p-5">
-            <template #left>
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-3 mb-2">
-                        <span :class="ragDot(projectData.project.rag_status)" class="w-4 h-4 rounded-full flex-shrink-0"></span>
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white truncate">{{ projectData.project.name }}</h2>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                        <span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{{ projectData.project.code }}</span>
-                        <span>{{ projectData.project.sector }}</span>
-                        <span v-if="projectData.project.sub_sector">&middot; {{ projectData.project.sub_sector }}</span>
-                        <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">{{ projectData.project.status }}</span>
-                    </div>
-                    <p v-if="projectData.project.key_issue_summary" class="mt-2 text-sm text-amber-600 dark:text-amber-400">
-                        <strong>Key Issue:</strong> {{ projectData.project.key_issue_summary }}
-                    </p>
-                </div>
-            </template>
-
-            <template #metrics>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                    <div>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ projectData.project.progress_pct ?? 0 }}%</p>
-                        <p class="text-xs text-gray-500">Progress</p>
-                    </div>
-                    <div>
-                        <p class="text-2xl font-bold" :style="{ color: INVESTMENT.committed }">${{ fmtM(projectData.project.cost_usd) }}</p>
-                        <p class="text-xs text-gray-500">Cost (USD)</p>
-                    </div>
-                    <div v-if="projectData.project.capacity_mw">
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ projectData.project.capacity_mw }} MW</p>
-                        <p class="text-xs text-gray-500">Capacity</p>
-                    </div>
-                    <div>
-                        <p
-                            class="text-2xl font-bold"
-                            :style="{ color: (projectData.summary.burnRate ?? 0) >= 50 ? RAG.green : RAG.amber }"
-                        >
-                            {{ projectData.summary.burnRate }}%
+            <PageHeader stackAt="lg" alignAt="start" class="p-5">
+                <template #left>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span :class="ragDot(projectData.project.rag_status)" class="w-4 h-4 rounded-full flex-shrink-0"></span>
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white truncate">{{ projectData.project.name }}</h2>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                            <span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{{ projectData.project.code }}</span>
+                            <span>{{ projectData.project.sector }}</span>
+                            <span v-if="projectData.project.sub_sector">&middot; {{ projectData.project.sub_sector }}</span>
+                            <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">{{ projectData.project.status }}</span>
+                        </div>
+                        <p v-if="projectData.project.key_issue_summary" class="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                            <strong>Key Issue:</strong> {{ projectData.project.key_issue_summary }}
                         </p>
-                        <p class="text-xs text-gray-500">Burn Rate</p>
                     </div>
-                </div>
-            </template>
-        </PageHeader>
+                </template>
+
+                <template #metrics>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                        <div>
+                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ projectData.project.progress_pct ?? 0 }}%</p>
+                            <p class="text-xs text-gray-500">Progress</p>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold" :style="{ color: INVESTMENT.committed }">${{ fmtM(projectData.project.cost_usd) }}</p>
+                            <p class="text-xs text-gray-500">Cost (USD)</p>
+                        </div>
+                        <div v-if="projectData.project.capacity_mw">
+                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ projectData.project.capacity_mw }} MW</p>
+                            <p class="text-xs text-gray-500">Capacity</p>
+                        </div>
+                        <div>
+                            <p
+                                class="text-2xl font-bold"
+                                :style="{ color: (projectData.summary.burnRate ?? 0) >= 50 ? RAG.green : RAG.amber }"
+                            >
+                                {{ projectData.summary.burnRate }}%
+                            </p>
+                            <p class="text-xs text-gray-500">Burn Rate</p>
+                        </div>
+                    </div>
+                </template>
+            </PageHeader>
+        </template>
 
         <!-- Project Details Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <!-- Left: Key Information -->
             <div class="lg:col-span-1">
                 <Card title="Project Information" noPadding>
@@ -360,7 +363,7 @@
     </AppLayout>
 </template>
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
@@ -369,12 +372,22 @@ import Badge from '@/Components/UI/Badge.vue';
 import RadialProgress from '@/Components/Charts/RadialProgress.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import { INVESTMENT, RAG } from '@/Composables/useChartPalette';
+import { useDirectorateStore } from '@/stores/useDirectorateStore';
+
+const directorateStore = useDirectorateStore();
 
 const props = defineProps({
     projectData: { type: Object, required: true },
     directorate: { type: Object, required: true },
     directorates: { type: Array, default: () => [] },
     backFilters: { type: Object, default: () => ({}) },
+});
+
+// Auto-enter directorate mode if not already active (e.g. direct URL navigation)
+onMounted(() => {
+    if (!directorateStore.activeDirectorate) {
+        directorateStore.enterDirectorate(props.directorate);
+    }
 });
 
 // ── Breadcrumb items ──
