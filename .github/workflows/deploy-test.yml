@@ -8,22 +8,12 @@ on:
 jobs:
   deploy:
     name: Deploy to Test Server
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, test]
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
       - name: Deploy to Test Server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.TEST_HOST }}
-          username: ${{ secrets.TEST_USERNAME }}
-          key: ${{ secrets.TEST_SSH_KEY }}
-          port: ${{ secrets.TEST_PORT }}
-          script: |
-            cd ${{ secrets.TEST_APP_PATH }}
-            
+        working-directory: ${{ secrets.TEST_APP_PATH }}
+        run: |
             echo "🔄 Pulling latest code from develop branch..."
             git pull origin develop
             
