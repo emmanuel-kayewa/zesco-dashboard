@@ -17,7 +17,7 @@ class PpDashboardService
      */
     public const DIMENSIONS = [
         'sector', 'sub_sector', 'status', 'rag_status', 'province',
-        'district', 'programme', 'funder', 'contractor',
+        'district', 'programme', 'funder', 'contractor', 'developer',
     ];
 
     /**
@@ -33,6 +33,7 @@ class PpDashboardService
         'programme'  => 'Programme',
         'funder'     => 'Funder',
         'contractor' => 'Contractor',
+        'developer'  => 'Developer',
     ];
 
     // ─── Level 1: Portfolio Overview ──────────────────────────────
@@ -81,18 +82,54 @@ class PpDashboardService
         $allProjects      = PpProject::all(); // for filter option values
         $safeguards       = PpSafeguard::all();
 
-        // Build breakdowns for each UN-APPLIED dimension
+        // Build breakdowns for ALL dimensions (including filtered ones for compact view)
         $breakdowns = [];
         foreach (self::DIMENSIONS as $dim) {
-            if (empty($filters[$dim])) {
+            $isFiltered = !empty($filters[$dim]);
+            
+            // For filtered dimensions, show only the selected value
+            if ($isFiltered) {
+                $selectedValue = $filters[$dim];
+                $count = $filteredProjects->where($dim, $selectedValue)->count();
+                $totalCost = $filteredProjects->where($dim, $selectedValue)->sum('cost_usd');
+                
+                $breakdown = [
+                    [
+                        'name' => $selectedValue,
+                        'value' => $count,
+                        'totalCost' => $totalCost,
+                    ]
+                ];
+            } else {
                 $breakdown = $this->groupByDimension($filteredProjects, $dim);
-                if (count($breakdown) > 1 || (count($breakdown) === 1 && $breakdown[0]['name'] !== null)) {
-                    $breakdowns[$dim] = [
-                        'label'  => self::DIMENSION_LABELS[$dim],
-                        'field'  => $dim,
-                        'data'   => $breakdown,
-                    ];
-                }
+            }
+            
+            if (count($breakdown) > 0 && $breakdown[0]['name'] !== null) {
+                $breakdowns[$dim] = [
+                    'label'        => self::DIMENSION_LABELS[$dim],
+                    'field'        => $dim,
+                    'data'         => $breakdown,
+                    'isFiltered'   => $isFiltered,
+                    'activeFilter' => $isFiltered ? $filters[$dim] : null,
+                ];
+            }
+        }
+        
+        // Special handling for Province -> District drill-down
+        // If province is filtered but district is not, show districts for that province
+        if (!empty($filters['province']) && empty($filters['district'])) {
+            $provinceProjects = $query->get();
+            $districtBreakdown = $this->groupByDimension($provinceProjects, 'district');
+            
+            if (count($districtBreakdown) > 1) {
+                $breakdowns['district'] = [
+                    'label'        => self::DIMENSION_LABELS['district'],
+                    'field'        => 'district',
+                    'data'         => $districtBreakdown,
+                    'isFiltered'   => false,
+                    'activeFilter' => null,
+                    'parentFilter' => $filters['province'], // Track that this is filtered by parent
+                ];
             }
         }
 
@@ -357,13 +394,29 @@ class PpDashboardService
             'IPP'          => '#9b8ec4',
         ];
 
-        return $projects->groupBy('sector')->map(function ($group, $sector) use ($sectorColors) {
+        $projectIds = $projects->pluck('id');
+        $paidByProject = PpFinancial::query()
+            ->whereIn('pp_project_id', $projectIds)
+            ->where('currency', 'USD')
+            ->selectRaw('pp_project_id, SUM(paid_to_date) as total_paid')
+            ->groupBy('pp_project_id')
+            ->pluck('total_paid', 'pp_project_id');
+
+        return $projects->groupBy('sector')->map(function ($group, $sector) use ($sectorColors, $paidByProject) {
             $totalMw = round($group->sum('capacity_mw'), 1);
+            $totalCost = round($group->sum('cost_usd'), 2);
+            $totalPaid = round(
+                $group->sum(fn ($p) => (float) ($paidByProject[$p->id] ?? 0)),
+                2
+            );
+            $spendPct = $totalCost > 0 ? round(($totalPaid / $totalCost) * 100, 1) : 0;
             return [
                 'sector'       => $sector,
                 'color'        => $sectorColors[$sector] ?? '#64748b',
                 'projectCount' => $group->count(),
-                'totalCost'    => round($group->sum('cost_usd'), 2),
+                'totalCost'    => $totalCost,
+                'totalPaid'    => $totalPaid,
+                'spendPct'     => $spendPct,
                 'avgProgress'  => round($group->avg('progress_pct'), 1),
                 'totalMw'      => $totalMw,
                 'ragCounts'    => [
@@ -390,7 +443,9 @@ class PpDashboardService
                 'name'      => $p->project_name,
                 'sector'    => $p->sector,
                 'rag'       => $p->rag_status,
+                'status'    => $p->status,
                 'key_issue' => $p->key_issue_summary,
+                'progress_pct' => $p->progress_pct,
                 'progress'  => $p->progress_pct,
             ])
             ->values()
