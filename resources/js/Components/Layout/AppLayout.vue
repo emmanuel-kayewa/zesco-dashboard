@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen flex overflow-x-hidden">
+    <div class="min-h-screen flex overflow-x-hidden bg-gray-100 dark:bg-gray-900">
         <!-- Mobile Overlay -->
         <div
             v-if="mobileOpen"
@@ -25,125 +25,148 @@
                 sidebarOpen ? 'lg:w-64' : 'lg:w-20'
             ]"
         >
-            <!-- Logo -->
-            <div class="flex items-center h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
-                        <!-- Light mode: black logo, Dark mode: white logo -->
-                        <img src="/images/zesco_black_logo.svg" alt="ZESCO" class="w-20 h-20 object-contain dark:hidden" />
-                        <img src="/images/zesco_white_logo.svg" alt="ZESCO" class="w-20 h-20 object-contain hidden dark:block" />
-                    </div>
-                    <transition name="fade">
-                        <div v-if="sidebarOpen" class="overflow-hidden">
-                            <h1 class="text-sm font-bold text-gray-900 dark:text-white leading-tight">ZESCO</h1>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Executive Dashboard</p>
+            <!-- ═══ Directorate-Focused Sidebar ═══ -->
+            <transition name="sidebar-swap" mode="out-in">
+                <DirectorateSidebar
+                    v-if="directorateStore.activeDirectorate"
+                    key="directorate"
+                    :directorate="directorateStore.activeDirectorate"
+                    :expanded="sidebarOpen"
+                    :summary="directorateStore.activeDirectorate?.summary || null"
+                    :kpiCategories="directorateStore.activeDirectorate?.kpiCategories || []"
+                    :showFilters="directorateStore.activeDirectorate?.code !== 'PP'"
+                    @filter-change="handleDirectorateFilterChange"
+                />
+
+                <!-- ═══ Main Navigation Sidebar ═══ -->
+                <div v-else key="main" class="flex flex-col h-full">
+                    <!-- Logo -->
+                    <div class="flex items-center h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
+                                <img src="/images/zesco_black_logo.svg" alt="ZESCO" class="w-20 h-20 object-contain dark:hidden" />
+                                <img src="/images/zesco_white_logo.svg" alt="ZESCO" class="w-20 h-20 object-contain hidden dark:block" />
+                            </div>
+                            <transition name="fade">
+                                <div v-if="sidebarOpen" class="overflow-hidden">
+                                    <h1 class="text-sm font-bold text-gray-900 dark:text-white leading-tight">ZESCO</h1>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Executive Dashboard</p>
+                                </div>
+                            </transition>
                         </div>
-                    </transition>
-                </div>
-            </div>
+                    </div>
 
-            <!-- Navigation -->
-            <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-                <SidebarLink
-                    href="/dashboard"
-                    icon="dashboard"
-                    :label="sidebarOpen ? 'Overview' : ''"
-                    :active="$page.url === '/dashboard'"
-                />
-                <SidebarLink
-                    href="/dashboard/comparison"
-                    icon="chart"
-                    :label="sidebarOpen ? 'Comparison' : ''"
-                    :active="$page.url.includes('/comparison')"
-                />
-                <SidebarLink
-                    href="/ai"
-                    icon="ai"
-                    :label="sidebarOpen ? 'AI Insights' : ''"
-                    :active="$page.url.startsWith('/ai')"
-                />
-
-                <div v-if="sidebarOpen" class="pt-4 pb-2 px-3">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Directorates</p>
-                </div>
-
-                <template v-for="d in sortedDirectorates" :key="d.slug">
-                    <!-- PP Directorate gets an expandable sub-menu -->
-                    <SidebarGroup
-                        v-if="d.code === 'PP' && sidebarOpen"
-                        :label="d.name"
-                        :initial="d.code === 'CSE' ? 'CS' : d.code?.substring(0, 3)"
-                        :isActive="$page.url.includes('/pp') || $page.url.includes(d.slug)"
-                    >
+                    <!-- Navigation -->
+                    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
                         <SidebarLink
-                            href="/pp/dashboard"
+                            href="/dashboard"
+                            icon="dashboard"
+                            :label="sidebarOpen ? 'Overview' : ''"
+                            :active="$page.url === '/dashboard'"
+                        />
+                        <SidebarLink
+                            href="/dashboard/comparison"
                             icon="chart"
-                            :label="'Dashboard'"
-                            :active="$page.url.startsWith('/pp/dashboard')"
+                            :label="sidebarOpen ? 'Comparison' : ''"
+                            :active="$page.url.includes('/comparison')"
                         />
                         <SidebarLink
-                            href="/pp/projects"
-                            icon="folder"
-                            label="Data Management"
-                            :active="$page.url.startsWith('/pp/projects') || $page.url.startsWith('/pp/milestones') || $page.url.startsWith('/pp/financials') || $page.url.startsWith('/pp/risks') || $page.url.startsWith('/pp/safeguards') || $page.url.startsWith('/pp/programme')"
+                            href="/ai"
+                            icon="ai"
+                            :label="sidebarOpen ? 'AI Insights' : ''"
+                            :active="$page.url.startsWith('/ai')"
                         />
-                    </SidebarGroup>
-                    <!-- PP collapsed sidebar: just icon -->
-                    <SidebarLink
-                        v-else-if="d.code === 'PP' && !sidebarOpen"
-                        href="/pp/dashboard"
-                        :initial="d.code === 'CSE' ? 'CS' : d.code?.substring(0, 3)"
-                        label=""
-                        :title="d.name"
-                        :active="$page.url.includes('/pp') || $page.url.includes(d.slug)"
-                    />
-                    <!-- All other directorates: normal link -->
-                    <SidebarLink
-                        v-else
-                        :href="`/dashboard/directorate/${d.slug}`"
-                        :initial="d.code === 'CSE' ? 'CS' : d.code?.substring(0, 3)"
-                        :label="sidebarOpen ? d.name : ''"
-                        :title="d.name"
-                        :active="$page.url.includes(d.slug)"
-                    />
-                </template>
+                        <SidebarLink
+                            href="/weekly-reports"
+                            icon="document"
+                            :label="sidebarOpen ? 'Weekly Report' : ''"
+                            :active="$page.url.startsWith('/weekly-reports')"
+                        />
 
-                <template v-if="auth?.can_input_data">
-                    <div v-if="sidebarOpen" class="pt-4 pb-2 px-3">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Data Entry</p>
-                    </div>
-                    <SidebarLink href="/data-entry/kpi-entries" icon="chart" :label="sidebarOpen ? 'KPI Entry' : ''" :active="$page.url.includes('/kpi-entries')" />
-                    <SidebarLink href="/data-entry/financial-entries" icon="money" :label="sidebarOpen ? 'Financial' : ''" :active="$page.url.includes('/financial-entries')" />
-                    <SidebarLink href="/data-entry/projects" icon="folder" :label="sidebarOpen ? 'Projects' : ''" :active="$page.url.includes('/projects')" />
-                    <SidebarLink href="/data-entry/risks" icon="shield" :label="sidebarOpen ? 'Risks' : ''" :active="$page.url.includes('/risks')" />
-                    <SidebarLink href="/data-entry/incidents" icon="alert" :label="sidebarOpen ? 'Incidents' : ''" :active="$page.url.includes('/incidents')" />
-                    <SidebarLink href="/data-entry/wayleave-entries" icon="map" :label="sidebarOpen ? 'Wayleaves' : ''" :active="$page.url.includes('/wayleave-entries')" />
-                </template>
+                        <div v-if="sidebarOpen" class="pt-4 pb-2 px-3">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Directorates</p>
+                        </div>
 
-                <template v-if="auth?.is_admin">
-                    <div v-if="sidebarOpen" class="pt-4 pb-2 px-3">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Administration</p>
-                    </div>
-                    <SidebarLink href="/admin" icon="settings" :label="sidebarOpen ? 'Settings' : ''" :active="$page.url === '/admin'" />
-                    <SidebarLink href="/admin/kpi-import" icon="upload" :label="sidebarOpen ? 'KPI Import' : ''" :active="$page.url.includes('/kpi-import')" />
-                    <SidebarLink href="/admin/audit-logs" icon="log" :label="sidebarOpen ? 'Audit Logs' : ''" :active="$page.url.includes('/audit-logs')" />
-                </template>
-            </nav>
+                        <template v-for="d in sortedDirectorates" :key="d.slug">
+                            <!-- PP Directorate: click enters directorate sidebar -->
+                            <button
+                                v-if="d.code === 'PP'"
+                                @click="enterDirectorateView(d, '/pp/dashboard')"
+                                :class="['sidebar-link w-full', ($page.url.includes('/pp') || $page.url.includes(d.slug)) && 'sidebar-link-active']"
+                                :title="d.name"
+                            >
+                                <span :class="[
+                                    ($page.url.includes('/pp') || $page.url.includes(d.slug)) ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white' : 'border-gray-200 text-gray-400 dark:border-gray-700 dark:text-gray-500',
+                                    'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white dark:bg-gray-800 text-[8px] font-bold transition-colors duration-150'
+                                ]">
+                                    {{ d.code?.substring(0, 3) }}
+                                </span>
+                                <span v-if="sidebarOpen" class="truncate">{{ d.name }}</span>
+                            </button>
+                            <!-- All other directorates: click enters directorate sidebar -->
+                            <button
+                                v-else
+                                @click="enterDirectorateView(d, `/dashboard/directorate/${d.slug}`)"
+                                :class="['sidebar-link w-full', $page.url.includes(d.slug) && 'sidebar-link-active']"
+                                :title="d.name"
+                            >
+                                <span :class="[
+                                    $page.url.includes(d.slug) ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white' : 'border-gray-200 text-gray-400 dark:border-gray-700 dark:text-gray-500',
+                                    'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white dark:bg-gray-800 text-[8px] font-bold transition-colors duration-150'
+                                ]">
+                                    {{ d.code === 'CSE' ? 'CS' : d.code?.substring(0, 3) }}
+                                </span>
+                                <span v-if="sidebarOpen" class="truncate">{{ d.name }}</span>
+                            </button>
+                        </template>
 
-            <!-- Collapse Toggle (desktop only) -->
+                        <template v-if="auth?.is_admin">
+                            <div v-if="sidebarOpen" class="pt-4 pb-2 px-3">
+                                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Administration</p>
+                            </div>
+                            <SidebarLink href="/admin" icon="settings" :label="sidebarOpen ? 'Settings' : ''" :active="$page.url === '/admin'" />
+                            <SidebarLink href="/admin/audit-logs" icon="log" :label="sidebarOpen ? 'Audit Logs' : ''" :active="$page.url.includes('/audit-logs')" />
+                        </template>
+                    </nav>
+
+                    <!-- Collapse Toggle (desktop only) -->
+                    <button
+                        @click="sidebarOpen = !sidebarOpen"
+                        class="hidden lg:flex items-center justify-center h-12 border-t border-gray-200 dark:border-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
+                    >
+                        <svg :class="['w-5 h-5 transition-transform', !sidebarOpen && 'rotate-180']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                        </svg>
+                    </button>
+
+                    <!-- Close button (mobile only) -->
+                    <button
+                        @click="mobileOpen = false"
+                        class="lg:hidden flex items-center justify-center h-12 border-t border-gray-200 dark:border-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
+                    >
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </transition>
+
+            <!-- Collapse Toggle (desktop, when in directorate mode) -->
             <button
+                v-if="directorateStore.activeDirectorate"
                 @click="sidebarOpen = !sidebarOpen"
-                class="hidden lg:flex items-center justify-center h-12 border-t border-gray-200 dark:border-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
+                class="hidden lg:flex items-center justify-center h-12 border-t border-gray-200 dark:border-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition flex-shrink-0"
             >
                 <svg :class="['w-5 h-5 transition-transform', !sidebarOpen && 'rotate-180']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
                 </svg>
             </button>
 
-            <!-- Close button (mobile only) -->
+            <!-- Close button (mobile, when in directorate mode) -->
             <button
+                v-if="directorateStore.activeDirectorate"
                 @click="mobileOpen = false"
-                class="lg:hidden flex items-center justify-center h-12 border-t border-gray-200 dark:border-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
+                class="lg:hidden flex items-center justify-center h-12 border-t border-gray-200 dark:border-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition flex-shrink-0"
             >
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -175,11 +198,22 @@
 
                 <div class="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                     <!-- Data Source Badge -->
-                    <Badge 
+                    <!-- <Badge 
                         variant="filled-dot" 
                         :color="getDataSourceColor(app?.data_source)" 
                         :label="app?.data_source === 'simulation' ? 'Simulation' : app?.data_source === 'manual' ? 'Manual' : 'Live'" 
-                    />
+                    /> -->
+
+                    <!-- Chart Palette Selector -->
+                    <div class="flex items-center gap-2">
+                        <span class="hidden md:inline text-xs text-gray-500 dark:text-gray-400">Chart palette:</span>
+                        <Select
+                            v-model="paletteKey"
+                            :options="paletteOptions"
+                            size="sm"
+                            class="w-40 sm:w-52"
+                        />
+                    </div>
 
                     <!-- Dark Mode Toggle -->
                     <button @click="toggleDark" class="p-2 rounded-lg text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition" title="Toggle dark mode">
@@ -348,14 +382,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { ref, computed, onMounted, watch } from 'vue';
+import { Link, usePage, router } from '@inertiajs/vue3';
 import { useDarkMode } from '@/Composables/useDarkMode';
 import SidebarLink from './SidebarLink.vue';
 import SidebarGroup from './SidebarGroup.vue';
+import DirectorateSidebar from './DirectorateSidebar.vue';
 import Badge from '@/Components/UI/Badge.vue';
+import Select from '@/Components/UI/Select.vue';
 import { useBadges } from '@/Composables/useBadges';
 import AiDrawer from '@/Components/AI/AiDrawer.vue';
+import { useChartPalettes } from '@/Composables/useChartPalettes';
+import { useDirectorateStore } from '@/stores/useDirectorateStore';
 
 defineProps({
     // Kept for backwards compatibility: many pages pass this, but AppLayout uses global shared props.
@@ -365,6 +403,7 @@ defineProps({
 });
 
 const { getDataSourceColor } = useBadges();
+const directorateStore = useDirectorateStore();
 
 // No need for directorates prop - we get it from global Inertia share
 const page = usePage();
@@ -386,6 +425,50 @@ const sortedDirectorates = computed(() => {
 const sidebarOpen = ref(true);
 const mobileOpen = ref(false);
 const { isDark, toggle: toggleDark } = useDarkMode();
+const { paletteKey, paletteOptions } = useChartPalettes();
+
+watch(paletteKey, () => {
+    // Helps ECharts/Highcharts recompute layout when palette changes.
+    window.dispatchEvent(new Event('resize'));
+});
+
+// ── Directorate sidebar ──────────────────────────────────
+function enterDirectorateView(directorate, href) {
+    directorateStore.enterDirectorate(directorate);
+    router.visit(href);
+}
+
+function handleDirectorateFilterChange(filters) {
+    const d = directorateStore.activeDirectorate;
+    if (!d) return;
+    if (d.code === 'PP') return;
+    router.get(`/dashboard/directorate/${d.slug}`, {
+        from: filters.from || undefined,
+        to: filters.to || undefined,
+    }, { preserveState: true });
+}
+
+// Auto-detect directorate context from URL on page navigation
+watch(() => page.url, (url) => {
+    // Auto-exit when navigating away from directorate pages
+    if (!url.includes('/dashboard/directorate/') && !url.includes('/pp')) {
+        if (directorateStore.activeDirectorate) {
+            directorateStore.exitDirectorate();
+        }
+    }
+    // Auto-enter: if on a directorate URL but store is empty, find the matching directorate
+    // (The page's own onMounted will also handle this, but this catches edge cases)
+    if (!directorateStore.activeDirectorate) {
+        if (url.includes('/pp')) {
+            const ppDir = directorates.value.find(d => d.code === 'PP');
+            if (ppDir) directorateStore.enterDirectorate(ppDir);
+        } else if (url.includes('/dashboard/directorate/')) {
+            const slug = url.split('/dashboard/directorate/')[1]?.split('?')[0];
+            const matchDir = directorates.value.find(d => d.slug === slug);
+            if (matchDir) directorateStore.enterDirectorate(matchDir);
+        }
+    }
+}, { immediate: true });
 
 // ── Page-scoped AI drawer ───────────────────────────────
 const aiOpen = ref(false);
@@ -495,5 +578,21 @@ onMounted(() => {
 }
 .fade-enter-from, .fade-leave-to {
     opacity: 0;
+}
+
+/* Sidebar swap transition */
+.sidebar-swap-enter-active {
+    transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+}
+.sidebar-swap-leave-active {
+    transition: opacity 0.15s ease-in, transform 0.15s ease-in;
+}
+.sidebar-swap-enter-from {
+    opacity: 0;
+    transform: translateX(-8px);
+}
+.sidebar-swap-leave-to {
+    opacity: 0;
+    transform: translateX(8px);
 }
 </style>
