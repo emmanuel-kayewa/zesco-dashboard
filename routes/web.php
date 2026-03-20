@@ -22,6 +22,7 @@ use App\Http\Controllers\PpRiskController;
 use App\Http\Controllers\PpSafeguardController;
 use App\Http\Controllers\PpProgrammeOutputController;
 use App\Http\Controllers\PpGridImpactStudyController;
+use App\Http\Controllers\PpWeeklyReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -130,7 +131,18 @@ Route::middleware(app()->environment('local')
         Route::resource('grid-impact-studies', PpGridImpactStudyController::class)->only(['index', 'store', 'update', 'destroy'])->names([
             'index' => 'grid-impact-studies.index', 'store' => 'grid-impact-studies.store', 'update' => 'grid-impact-studies.update', 'destroy' => 'grid-impact-studies.destroy',
         ]);
+
+        // PP Weekly Reports (CRUD for PP users)
+        Route::resource('weekly-reports', PpWeeklyReportController::class)->names([
+            'index' => 'weekly-reports.index', 'create' => 'weekly-reports.create', 'store' => 'weekly-reports.store',
+            'show' => 'weekly-reports.show', 'edit' => 'weekly-reports.edit', 'update' => 'weekly-reports.update',
+            'destroy' => 'weekly-reports.destroy',
+        ])->parameters(['weekly-reports' => 'weekly_report']);
     });
+
+    // ── Weekly Reports (viewable by all authenticated users) ──
+    Route::get('/weekly-reports', [PpWeeklyReportController::class, 'index'])->name('weekly-reports.index');
+    Route::get('/weekly-reports/{weekly_report}', [PpWeeklyReportController::class, 'publicShow'])->name('weekly-reports.show');
 
     // ── AI Insights ──────────────────────────────────────────
     Route::prefix('ai')->name('ai.')->group(function () {
