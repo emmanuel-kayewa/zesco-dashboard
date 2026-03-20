@@ -115,6 +115,16 @@ function buildOptions() {
             layout: 'horizontal',
             itemStyle: { color: textColor, fontSize: '12px', fontWeight: '400' },
             itemHoverStyle: { color: isDark.value ? '#f1f5f9' : '#0f172a' },
+            // navigation: {
+            //     enabled: true,
+            //     arrowSize: 12,
+            //     style: {
+            //         color: textColor,
+            //     },
+            // },
+            // maxHeight: 60,
+            // itemMarginTop: 4,
+            // itemMarginBottom: 4,
         },
         series: [{
             name: 'Received',
