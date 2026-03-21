@@ -65,12 +65,6 @@
                             :active="$page.url === '/dashboard'"
                         />
                         <SidebarLink
-                            href="/dashboard/comparison"
-                            icon="chart"
-                            :label="sidebarOpen ? 'Comparison' : ''"
-                            :active="$page.url.includes('/comparison')"
-                        />
-                        <SidebarLink
                             href="/ai"
                             icon="ai"
                             :label="sidebarOpen ? 'AI Insights' : ''"
@@ -250,22 +244,49 @@
                         </span>
                     </button>
 
-                    <!-- User Menu -->
-                    <div class="flex items-center gap-3">
-                        <div class="text-right hidden sm:block">
-                            <p class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ auth?.name }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ auth?.role_display }}</p>
-                        </div>
-                        <div class="w-9 h-9 rounded-full bg-zesco-100 dark:bg-zesco-900/50 flex items-center justify-center">
+                    <!-- User Avatar Dropdown -->
+                    <div class="relative" data-user-menu>
+                        <button
+                            @click="showUserMenu = !showUserMenu"
+                            class="w-9 h-9 rounded-full bg-zesco-100 dark:bg-zesco-900/50 flex items-center justify-center hover:ring-2 hover:ring-zesco-300 dark:hover:ring-zesco-600 transition"
+                            title="Account menu"
+                        >
                             <span class="text-sm font-semibold text-zesco-600 dark:text-zesco-400">
                                 {{ auth?.name?.charAt(0) }}
                             </span>
-                        </div>
-                        <Link href="/logout" method="post" as="button" class="p-2 rounded-lg text-gray-400 hover:text-red-600 transition">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                            </svg>
-                        </Link>
+                        </button>
+
+                        <!-- Dropdown -->
+                        <Transition
+                            enter-active-class="transition ease-out duration-150"
+                            enter-from-class="opacity-0 scale-95 translate-y-1"
+                            enter-to-class="opacity-100 scale-100 translate-y-0"
+                            leave-active-class="transition ease-in duration-100"
+                            leave-from-class="opacity-100 scale-100 translate-y-0"
+                            leave-to-class="opacity-0 scale-95 translate-y-1"
+                        >
+                            <div
+                                v-if="showUserMenu"
+                                class="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg py-1 z-50"
+                            >
+                                <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ auth?.name }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ auth?.role_display }}</p>
+                                </div>
+                                <Link
+                                    href="/logout"
+                                    method="post"
+                                    as="button"
+                                    class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                                    @click="showUserMenu = false"
+                                >
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                    Sign out
+                                </Link>
+                            </div>
+                        </Transition>
                     </div>
                 </div>
             </header>
@@ -374,7 +395,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { useDarkMode } from '@/Composables/useDarkMode';
 import SidebarLink from './SidebarLink.vue';
@@ -415,7 +436,15 @@ const sortedDirectorates = computed(() => {
 
 const sidebarOpen = ref(true);
 const mobileOpen = ref(false);
+const showUserMenu = ref(false);
 const { isDark, toggle: toggleDark } = useDarkMode();
+
+// Close user menu on click outside
+function handleClickOutside(e) {
+    if (showUserMenu.value && !e.target.closest('[data-user-menu]')) {
+        showUserMenu.value = false;
+    }
+}
 
 // ── Directorate sidebar ──────────────────────────────────
 function enterDirectorateView(directorate, href) {
@@ -554,6 +583,11 @@ function formatAlertTime(value) {
 onMounted(() => {
     // Preload count so the bell can show it without opening
     fetchUnreadAlerts();
+    document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
