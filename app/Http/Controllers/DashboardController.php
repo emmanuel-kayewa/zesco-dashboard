@@ -6,7 +6,9 @@ use App\Models\Directorate;
 use App\Models\WayleaveEntry;
 use App\Models\PpProject;
 use App\Models\PpFinancial;
+use App\Models\PpRisk;
 use App\Services\DashboardService;
+use App\Services\PpDashboardService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,7 +16,8 @@ use Inertia\Inertia;
 class DashboardController extends Controller
 {
     public function __construct(
-        private DashboardService $dashboardService
+        private DashboardService $dashboardService,
+        private PpDashboardService $ppDashboardService,
     ) {}
 
     /**
@@ -22,31 +25,134 @@ class DashboardController extends Controller
      */
     public function index(Request $request)
     {
-        $from = $request->get('from') ? Carbon::parse($request->get('from')) : null;
-        $to = $request->get('to') ? Carbon::parse($request->get('to')) : null;
-
-        $summary = $this->dashboardService->getExecutiveSummary($from, $to);
         $directorates = Directorate::active()->ordered()->get();
-        $textSummary = $this->dashboardService->generateTextSummary();
 
-        // Directorate heads only see their own directorate's alerts
+        // ── Build genuine directorate summary from real data ──
+        $ppDir = $directorates->firstWhere('code', 'PP');
+        $allProjects = PpProject::all();
+
+        // PP financials
+        $totalCommitted = round($allProjects->sum('cost_usd'), 2);
+        $totalPaid = round(
+            PpFinancial::where('currency', 'USD')->sum('paid_to_date'),
+            2
+        );
+        $spendPct = $totalCommitted > 0 ? round(($totalPaid / $totalCommitted) * 100, 1) : 0;
+
+        // PP risks
+        $ppRisks = PpRisk::all();
+        $totalRisks = $ppRisks->count();
+        $highRisks = $ppRisks->whereIn('risk_level', ['High', 'Critical', 'high', 'critical'])->count();
+        $openRisks = $ppRisks->whereIn('status', ['Open', 'open'])->count();
+
+        // Average progress
+        $avgProgress = $allProjects->count() > 0 ? round($allProjects->avg('progress_pct'), 1) : 0;
+
+        // Sector breakdown for charts
+        $sectorBreakdown = $allProjects->groupBy('sector')->map(function ($group, $sector) {
+            $sectorCommitted = round($group->sum('cost_usd'), 2);
+            $sectorPaid = round(
+                PpFinancial::whereIn('pp_project_id', $group->pluck('id'))
+                    ->where('currency', 'USD')
+                    ->sum('paid_to_date'),
+                2
+            );
+            return [
+                'name' => $sector ?: 'Unknown',
+                'value' => $group->count(),
+                'totalCost' => $sectorCommitted,
+                'totalPaid' => $sectorPaid,
+                'avgProgress' => round($group->avg('progress_pct'), 1),
+            ];
+        })->values()->toArray();
+
+        // RAG breakdown
+        $ragBreakdown = $allProjects->groupBy('rag_status')->map(fn ($g, $rag) => [
+            'name' => $rag ?: 'Unknown',
+            'value' => $g->count(),
+        ])->values()->toArray();
+
+        // Risk by level
+        $risksByLevel = $ppRisks->groupBy('risk_level')->map(fn ($g, $lvl) => [
+            'name' => $lvl ?: 'Unknown',
+            'value' => $g->count(),
+        ])->values()->toArray();
+
+        // Risk by category
+        $risksByCategory = $ppRisks->groupBy('risk_category')->map(fn ($g, $cat) => [
+            'name' => $cat ?: 'Unknown',
+            'value' => $g->count(),
+        ])->values()->toArray();
+
+        // Build per-directorate summary — real data for PP, empty for others
+        $directorateSummaries = $directorates->map(function ($d) use ($ppDir, $allProjects, $ppRisks, $totalCommitted, $totalPaid, $avgProgress, $totalRisks, $highRisks) {
+            $hasData = $ppDir && $d->id === $ppDir->id;
+
+            return [
+                'id' => $d->id,
+                'name' => $d->name,
+                'code' => $d->code,
+                'slug' => $d->slug,
+                'color' => $d->color,
+                'has_data' => $hasData,
+                'project_count' => $hasData ? $allProjects->count() : 0,
+                'total_committed' => $hasData ? $totalCommitted : 0,
+                'total_paid' => $hasData ? $totalPaid : 0,
+                'avg_progress' => $hasData ? $avgProgress : 0,
+                'risk_count' => $hasData ? $totalRisks : 0,
+                'high_risk_count' => $hasData ? $highRisks : 0,
+            ];
+        })->sortBy(function ($d) {
+            // MD first, then alphabetical by code
+            return $d['code'] === 'MD' ? '0' : ('1_' . $d['code']);
+        })->values()->toArray();
+
+        // Filter for directorate heads
         $user = $request->user();
         if ($user && $user->isDirectorateHead() && $user->directorate_id) {
-            // Filter summary directorates to only their directorate
-            $summary['directorates'] = collect($summary['directorates'] ?? [])
+            $directorateSummaries = collect($directorateSummaries)
                 ->filter(fn ($d) => $d['id'] === $user->directorate_id)
                 ->values()
                 ->toArray();
         }
 
+        // Top issues (Red RAG projects)
+        $topIssues = $allProjects
+            ->filter(fn ($p) => $p->rag_status === 'Red' || !empty($p->key_issue_summary))
+            ->sortByDesc(fn ($p) => $p->rag_status === 'Red' ? 1 : 0)
+            ->take(5)
+            ->map(fn ($p) => [
+                'id' => $p->id,
+                'code' => $p->project_code,
+                'name' => $p->project_name,
+                'sector' => $p->sector,
+                'rag' => $p->rag_status,
+                'progress' => $p->progress_pct,
+                'key_issue' => $p->key_issue_summary,
+            ])
+            ->values()
+            ->toArray();
+
         return Inertia::render('Dashboard/Index', [
-            'summary' => $summary,
             'directorates' => $directorates,
-            'textSummary' => $textSummary,
-            'filters' => [
-                'from' => $from?->format('Y-m-d'),
-                'to' => $to?->format('Y-m-d'),
+            'directorateSummaries' => $directorateSummaries,
+            'portfolio' => [
+                'totalProjects' => $allProjects->count(),
+                'totalCommitted' => $totalCommitted,
+                'totalPaid' => $totalPaid,
+                'spendPct' => $spendPct,
+                'avgProgress' => $avgProgress,
+                'totalRisks' => $totalRisks,
+                'highRisks' => $highRisks,
+                'openRisks' => $openRisks,
             ],
+            'charts' => [
+                'sectorBreakdown' => $sectorBreakdown,
+                'ragBreakdown' => $ragBreakdown,
+                'risksByLevel' => $risksByLevel,
+                'risksByCategory' => $risksByCategory,
+            ],
+            'topIssues' => $topIssues,
         ]);
     }
 
