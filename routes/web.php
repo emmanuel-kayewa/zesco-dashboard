@@ -23,6 +23,7 @@ use App\Http\Controllers\PpSafeguardController;
 use App\Http\Controllers\PpProgrammeOutputController;
 use App\Http\Controllers\PpGridImpactStudyController;
 use App\Http\Controllers\PpWeeklyReportController;
+use App\Http\Controllers\PreferenceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -68,6 +69,9 @@ Route::middleware(app()->environment('local')
 
     // Component Showcase (for testing)
     Route::get('/components', fn() => Inertia::render('ComponentShowcase'))->name('components.showcase');
+
+    // ── User Preferences ───────────────────────────────────
+    Route::put('/user/preferences', [PreferenceController::class, 'update'])->name('user.preferences.update');
 
     // ── Dashboard ──────────────────────────────────────────
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
