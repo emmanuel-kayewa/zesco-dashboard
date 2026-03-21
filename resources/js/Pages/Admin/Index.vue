@@ -21,9 +21,9 @@
                         {{ simulationActive ? 'Running' : 'Stopped' }}
                     </span>
                 </div>
-                <button @click="runSimulationCycle" :disabled="runningCycle" class="btn-primary text-xs">
+                <Button @click="runSimulationCycle" :disabled="runningCycle" :loading="runningCycle" variant="primary" size="xs">
                     {{ runningCycle ? 'Running...' : 'Run Cycle Now' }}
-                </button>
+                </Button>
                 <div class="text-xs text-gray-400">
                     Data Source: <span class="font-medium text-gray-600 dark:text-gray-300">{{ currentDataSource }}</span>
                 </div>
@@ -40,7 +40,7 @@
                     <input v-else v-model="settingsForm[setting.key]" type="text" class="input-field w-full text-sm" />
                 </div>
                 <div class="md:col-span-2 lg:col-span-3">
-                    <button type="submit" class="btn-primary text-sm">Save Settings</button>
+                    <Button type="submit" variant="primary" size="sm">Save Settings</Button>
                 </div>
             </form>
         </Card>
@@ -48,10 +48,10 @@
         <!-- User Management -->
         <Card title="User Management" class="mb-6">
             <template #actions>
-                <button @click="showAddUser = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors">
+                <Button @click="showAddUser = true" variant="primary" size="xs">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     Add User
-                </button>
+                </Button>
             </template>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm min-w-[700px]">
@@ -159,12 +159,12 @@
                         </div>
                     </div>
                     <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
-                        <button type="button" @click="showAddUser = false" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                        <Button type="button" @click="showAddUser = false" variant="secondary" size="sm">
                             Cancel
-                        </button>
-                        <button type="submit" :disabled="newUserForm.processing" class="px-4 py-2 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 transition-colors">
+                        </Button>
+                        <Button type="submit" :disabled="newUserForm.processing" :loading="newUserForm.processing" variant="primary" size="sm">
                             {{ newUserForm.processing ? 'Creating...' : 'Create User' }}
-                        </button>
+                        </Button>
                     </div>
                 </form>
             </div>
@@ -203,6 +203,7 @@ import { Link, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import Card from '@/Components/UI/Card.vue';
+import Button from '@/Components/UI/Button.vue';
 
 const props = defineProps({
     settings: { type: Array, default: () => [] },
