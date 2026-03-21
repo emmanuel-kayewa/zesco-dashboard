@@ -2,273 +2,371 @@
     <AppLayout :directorates="directorates">
         <template #title>Executive Overview</template>
 
-        <!-- Filters Bar -->
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-6 no-print">
-            <div class="flex items-center gap-4">
-                <DateRangePicker
-                    v-model:from="filters.from"
-                    v-model:to="filters.to"
-                    @apply="applyFilters"
-                    @clear="clearFilters"
-                />
-                <div v-if="isLive" class="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400" title="Receiving live data updates">
-                    <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
-                    <span class="hidden sm:inline">Live</span>
-                    <span v-if="lastUpdated" class="hidden md:inline text-gray-400">&middot; {{ lastUpdated }}</span>
+        <!-- Compact Header Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 no-print">
+            <div class="flex items-center gap-3">
+                <!-- Tab Switcher -->
+                <div class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-lg p-0.5">
+                    <button
+                        v-for="tab in tabs"
+                        :key="tab.key"
+                        @click="activeTab = tab.key"
+                        :class="[
+                            'px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200',
+                            activeTab === tab.key
+                                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        ]"
+                    >
+                        {{ tab.label }}
+                    </button>
                 </div>
             </div>
-            <div class="flex items-center gap-2">
-                <a href="/export/executive/pdf" class="btn-secondary text-xs" title="Download PDF">
-                    <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    PDF
+            <div class="flex items-center gap-1.5">
+                <a href="/export/executive/pdf" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Download PDF">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 </a>
-                <a href="/export/executive/excel" class="btn-secondary text-xs" title="Download Excel">
-                    <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    Excel
+                <a href="/export/executive/excel" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Download Excel">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 </a>
-                <Button @click="printView" variant="secondary" size="xs">
+                <button @click="printView" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Print">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                    Print
-                </Button>
+                </button>
             </div>
         </div>
 
-        <!-- AI Summary Banner -->
-        <div v-if="textSummary" class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-            <div class="flex items-start gap-3">
-                <div class="w-8 h-8 rounded-lg bg-zesco-100 dark:bg-zesco-900/40 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <svg class="w-4 h-4 text-zesco-600 dark:text-zesco-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <div>
-                    <p class="text-xs font-semibold text-zesco-700 dark:text-zesco-400 mb-1">Executive Insight</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ textSummary }}</p>
-                </div>
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- TAB: Overview                                          -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <div v-show="activeTab === 'overview'">
+
+            <!-- KPI Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <KpiCard
+                    title="Total Projects"
+                    :formattedValue="String(portfolio.totalProjects)"
+                    :change="null"
+                    status="healthy"
+                />
+                <KpiCard
+                    title="Portfolio Committed"
+                    :formattedValue="fmtUsd(portfolio.totalCommitted)"
+                    :change="null"
+                    status="healthy"
+                />
+                <KpiCard
+                    title="Average Progress"
+                    :formattedValue="portfolio.avgProgress + '%'"
+                    :change="null"
+                    :status="portfolio.avgProgress >= 50 ? 'healthy' : 'warning'"
+                />
+                <KpiCard
+                    title="Risk Exposure"
+                    :formattedValue="portfolio.highRisks + ' High / ' + portfolio.totalRisks + ' Total'"
+                    :change="null"
+                    :status="portfolio.highRisks > 5 ? 'critical' : portfolio.highRisks > 0 ? 'warning' : 'healthy'"
+                />
             </div>
-        </div>
 
-        <!-- KPI Summary Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <KpiCard
-                title="Total Revenue"
-                :formattedValue="formatCurrency(summary.total_revenue)"
-                :change="5.2"
-                status="healthy"
-                :showSparkline="true"
-            />
-            <KpiCard
-                title="Average Completion"
-                :formattedValue="summary.avg_completion + '%'"
-                :change="-1.3"
-                status="warning"
-                :showSparkline="true"
-            />
-            <KpiCard
-                title="Risk Exposure"
-                :formattedValue="summary.high_risks + ' High'"
-                :change="null"
-                :status="summary.high_risks > 5 ? 'critical' : 'healthy'"
-            />
-            <KpiCard
-                title="Operational Uptime"
-                :formattedValue="(summary.avg_uptime || 0).toFixed(2) + '%'"
-                :change="0.3"
-                status="healthy"
-                :showSparkline="true"
-            />
-        </div>
+            <!-- Charts Row 1: Sector Investment + Portfolio Cost -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <ChartCard title="Investment by Sector (USD)" :baseHeight="340">
+                    <template #default="{ zoomedHeight }">
+                        <BarChart
+                            :data="sectorInvestmentData"
+                            xField="sector"
+                            yField="committed"
+                            seriesName="Committed (USD)"
+                            :height="zoomedHeight"
+                            :multiSeries="[
+                                { name: 'Committed', field: 'committed', color: '#6889c4' },
+                                { name: 'Paid', field: 'paid', color: '#5ba5b5' },
+                            ]"
+                        />
+                    </template>
+                </ChartCard>
 
-        <!-- Charts Row 1 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <ChartCard title="Revenue by Directorate" :baseHeight="320">
-                <template #default="{ zoomedHeight }">
-                    <BarChart
-                        :data="directorateRevenue"
-                        xField="code"
-                        yField="revenue"
-                        seriesName="Revenue (ZMW)"
-                        :height="zoomedHeight"
-                    />
-                </template>
-            </ChartCard>
+                <ChartCard title="Portfolio Cost: Committed vs Paid" :baseHeight="340">
+                    <template #default>
+                        <Pie3DChart
+                            :data="portfolioCostPie"
+                            height="340px"
+                            :depth="35"
+                        />
+                    </template>
+                </ChartCard>
+            </div>
 
-            <ChartCard title="Budget Utilization" :baseHeight="320">
-                <template #default="{ zoomedHeight }">
-                    <PieChart
-                        :data="budgetPieData"
-                        :height="zoomedHeight"
-                    />
-                </template>
-            </ChartCard>
-        </div>
+            <!-- Charts Row 2: Projects by Sector + Risks by Category -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <ChartCard title="Projects by Sector" :baseHeight="320">
+                    <template #default>
+                        <Pie3DChart
+                            :data="charts.sectorBreakdown"
+                            height="320px"
+                            :depth="35"
+                        />
+                    </template>
+                </ChartCard>
 
-        <!-- Charts Row 2 -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <ChartCard title="Uptime" :baseHeight="200">
-                <template #default="{ zoomedHeight }">
-                    <GaugeChart
-                        :value="summary.avg_uptime || 0"
-                        :min="90"
-                        :max="100"
-                        title="Avg Uptime"
-                        unit="%"
-                        :height="zoomedHeight"
-                    />
-                </template>
-            </ChartCard>
+                <ChartCard title="Risks by Category" :baseHeight="320">
+                    <template #default>
+                        <Pie3DChart
+                            :data="charts.risksByCategory"
+                            height="320px"
+                            :depth="35"
+                        />
+                    </template>
+                </ChartCard>
+            </div>
 
-            <ChartCard title="Risk Distribution" class="md:col-span-2" :baseHeight="200">
-                <template #default="{ zoomedHeight }">
-                    <HeatmapChart
-                        :data="riskHeatmapData"
-                        :xLabels="directorateLabels"
-                        :yLabels="['Low', 'Medium', 'High', 'Critical']"
-                        :height="zoomedHeight"
-                    />
-                </template>
-            </ChartCard>
-        </div>
-
-        <!-- Directorates Grid -->
-        <Card title="Directorate Performance" class="mb-6">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-2">
-                <Link
-                    v-for="d in summary.directorates"
-                    :key="d.id"
-                    :href="`/dashboard/directorate/${d.slug}`"
-                    class="block p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-executive-md hover:border-zesco-200 dark:hover:border-zesco-700 transition-all duration-200"
-                >
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: d.color }"></div>
-                        <h4 class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ d.code }}</h4>
-                    </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 truncate" :title="d.name">{{ d.name }}</p>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                            <p class="text-gray-400">Completion</p>
-                            <p class="font-semibold text-gray-900 dark:text-white">{{ d.completion_percentage }}%</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-400">Risks</p>
-                            <p class="font-semibold" :class="d.high_risk_count > 2 ? 'text-red-600' : 'text-gray-900 dark:text-white'">
-                                {{ d.risk_count }} ({{ d.high_risk_count }} high)
+            <!-- Top Issues -->
+            <Card v-if="topIssues.length > 0" title="Attention Required" class="mb-6">
+                <div class="divide-y divide-gray-100 dark:divide-gray-700/50">
+                    <div v-for="issue in topIssues" :key="issue.id" class="flex items-center gap-3 px-4 py-3">
+                        <span class="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                              :class="{
+                                  'bg-red-500': issue.rag === 'Red',
+                                  'bg-amber-500': issue.rag === 'Amber',
+                                  'bg-green-500': issue.rag === 'Green',
+                                  'bg-gray-400': !issue.rag,
+                              }"></span>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                {{ issue.code }} &mdash; {{ issue.name }}
+                            </p>
+                            <p v-if="issue.key_issue" class="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                {{ issue.key_issue }}
                             </p>
                         </div>
-                        <div>
-                            <p class="text-gray-400">Employees</p>
-                            <p class="font-semibold text-gray-900 dark:text-white">{{ d.employees?.toLocaleString() || '—' }}</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-400">Budget Util.</p>
-                            <p class="font-semibold text-gray-900 dark:text-white">{{ d.budget_utilization }}%</p>
+                        <div class="text-right flex-shrink-0">
+                            <p class="text-xs text-gray-400">{{ issue.sector }}</p>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ issue.progress ?? 0 }}%</p>
                         </div>
                     </div>
-                </Link>
+                </div>
+            </Card>
+
+            <!-- Directorates Grid -->
+            <Card title="Directorate Performance" class="mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-2">
+                    <Link
+                        v-for="d in directorateSummaries"
+                        :key="d.id"
+                        :href="`/dashboard/directorate/${d.slug}`"
+                        class="block p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-executive-md hover:border-zesco-200 dark:hover:border-zesco-700 transition-all duration-200"
+                    >
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: d.color }"></div>
+                            <h4 class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ d.code }}</h4>
+                            <span v-if="!d.has_data" class="ml-auto text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">No data yet</span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 truncate" :title="d.name">{{ d.name }}</p>
+                        <template v-if="d.has_data">
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <p class="text-gray-400">Projects</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white">{{ d.project_count }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400">Avg Progress</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white">{{ d.avg_progress }}%</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400">Committed</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white">{{ fmtUsd(d.total_committed) }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400">Risks</p>
+                                    <p class="font-semibold" :class="d.high_risk_count > 2 ? 'text-red-600' : 'text-gray-900 dark:text-white'">
+                                        {{ d.risk_count }} ({{ d.high_risk_count }} high)
+                                    </p>
+                                </div>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <div class="flex items-center justify-center py-4">
+                                <p class="text-xs text-gray-400 dark:text-gray-500 italic">Data collection pending</p>
+                            </div>
+                        </template>
+                    </Link>
+                </div>
+            </Card>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- TAB: Comparison                                        -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <div v-show="activeTab === 'comparison'">
+
+            <!-- Metric Selector -->
+            <div class="flex flex-wrap items-center gap-4 mb-6">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Compare by:</span>
+                <div class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-lg p-0.5">
+                    <button
+                        v-for="m in comparisonMetrics"
+                        :key="m.key"
+                        @click="selectedMetric = m.key"
+                        :class="[
+                            'px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200',
+                            selectedMetric === m.key
+                                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        ]"
+                    >
+                        {{ m.label }}
+                    </button>
+                </div>
             </div>
-        </Card>
+
+            <!-- Comparison Bar Chart -->
+            <ChartCard title="Directorate Comparison" class="mb-6" :baseHeight="380">
+                <template #default="{ zoomedHeight }">
+                    <BarChart
+                        :data="comparisonBarData"
+                        xField="code"
+                        :yField="selectedMetric"
+                        :seriesName="comparisonMetrics.find(m => m.key === selectedMetric)?.label || ''"
+                        :horizontal="true"
+                        :height="zoomedHeight"
+                    />
+                </template>
+            </ChartCard>
+
+            <!-- Comparison Table -->
+            <Card title="Detailed Comparison" class="mb-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm min-w-[640px]">
+                        <thead>
+                            <tr class="border-b border-gray-200 dark:border-gray-700">
+                                <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Directorate</th>
+                                <th class="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Projects</th>
+                                <th class="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Committed (USD)</th>
+                                <th class="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Paid (USD)</th>
+                                <th class="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Avg Progress</th>
+                                <th class="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Risks</th>
+                                <th class="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="d in directorateSummaries" :key="d.id" class="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition">
+                                <td class="py-3 px-4">
+                                    <Link :href="`/dashboard/directorate/${d.slug}`" class="font-medium text-zesco-700 dark:text-zesco-400 hover:underline truncate block max-w-[200px]" :title="`${d.code} — ${d.name}`">
+                                        {{ d.code }} &mdash; {{ d.name }}
+                                    </Link>
+                                </td>
+                                <td class="text-right py-3 px-4 font-medium">
+                                    {{ d.has_data ? d.project_count : '—' }}
+                                </td>
+                                <td class="text-right py-3 px-4 hidden sm:table-cell">
+                                    {{ d.has_data ? fmtUsd(d.total_committed) : '—' }}
+                                </td>
+                                <td class="text-right py-3 px-4 hidden md:table-cell">
+                                    {{ d.has_data ? fmtUsd(d.total_paid) : '—' }}
+                                </td>
+                                <td class="text-right py-3 px-4 font-medium" :class="d.has_data ? (d.avg_progress >= 50 ? 'text-green-600' : 'text-amber-600') : ''">
+                                    {{ d.has_data ? d.avg_progress + '%' : '—' }}
+                                </td>
+                                <td class="text-right py-3 px-4">
+                                    <span v-if="d.has_data" :class="d.high_risk_count > 2 ? 'text-red-600 font-semibold' : ''">
+                                        {{ d.risk_count }} ({{ d.high_risk_count }} high)
+                                    </span>
+                                    <span v-else class="text-gray-400">&mdash;</span>
+                                </td>
+                                <td class="text-center py-3 px-4">
+                                    <span v-if="d.has_data" class="inline-block w-2.5 h-2.5 rounded-full"
+                                          :class="{
+                                              'bg-green-500': d.avg_progress >= 50,
+                                              'bg-amber-500': d.avg_progress >= 25 && d.avg_progress < 50,
+                                              'bg-red-500': d.avg_progress < 25,
+                                          }"></span>
+                                    <span v-else class="inline-block w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
+        </div>
 
     </AppLayout>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import KpiCard from '@/Components/Dashboard/KpiCard.vue';
 import Card from '@/Components/UI/Card.vue';
-import Button from '@/Components/UI/Button.vue';
 import ChartCard from '@/Components/UI/ChartCard.vue';
-import DateRangePicker from '@/Components/UI/DateRangePicker.vue';
 import BarChart from '@/Components/Charts/BarChart.vue';
-import PieChart from '@/Components/Charts/PieChart.vue';
-import GaugeChart from '@/Components/Charts/GaugeChart.vue';
-import HeatmapChart from '@/Components/Charts/HeatmapChart.vue';
-import { formatCurrency } from '@/Composables/useFormatters';
-import { useEcho } from '@/Composables/useEcho';
+import Pie3DChart from '@/Components/Charts/Pie3DChart.vue';
+
 
 const props = defineProps({
-    summary: { type: Object, default: () => ({}) },
     directorates: { type: Array, default: () => [] },
-    textSummary: { type: String, default: '' },
-    filters: { type: Object, default: () => ({ from: '', to: '' }) },
+    directorateSummaries: { type: Array, default: () => [] },
+    portfolio: { type: Object, default: () => ({}) },
+    charts: { type: Object, default: () => ({}) },
+    topIssues: { type: Array, default: () => [] },
 });
 
-const filters = ref({ ...props.filters });
+// ── Tabs ──
+const tabs = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'comparison', label: 'Comparison' },
+];
+const activeTab = ref('overview');
 
-const directorateRevenue = computed(() => {
-    return (props.summary.directorates || []).map(d => ({
-        code: d.code,
-        revenue: d.revenue,
-    }));
-});
-
-const budgetPieData = computed(() => {
-    return (props.summary.directorates || []).slice(0, 6).map(d => ({
-        name: d.code,
-        value: d.budget,
-    }));
-});
-
-const directorateLabels = computed(() => (props.summary.directorates || []).map(d => d.code));
-
-const riskHeatmapData = computed(() => {
-    const data = [];
-    (props.summary.directorates || []).forEach((d, x) => {
-        // Distribute risks across levels
-        data.push([x, 0, Math.max(0, d.risk_count - d.high_risk_count)]); // Low
-        data.push([x, 1, Math.floor(d.risk_count * 0.3)]); // Medium
-        data.push([x, 2, Math.floor(d.high_risk_count * 0.6)]); // High
-        data.push([x, 3, Math.ceil(d.high_risk_count * 0.4)]); // Critical
-    });
-    return data;
-});
-
-function applyFilters() {
-    router.get('/dashboard', {
-        from: filters.value.from || undefined,
-        to: filters.value.to || undefined,
-    }, { preserveState: true });
-}
-
-function clearFilters() {
-    filters.value = { from: '', to: '' };
-    router.get('/dashboard');
+// ── KPI helpers ──
+function fmtUsd(val) {
+    const n = Number(val) || 0;
+    if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+    return '$' + n.toLocaleString();
 }
 
 function printView() {
     window.print();
 }
 
-// ── WebSocket: Listen for real-time simulation updates ────
-const { connect, listenForUpdates, disconnect } = useEcho();
-const isLive = ref(false);
-const lastUpdated = ref(null);
-
-onMounted(async () => {
-    try {
-        await connect();
-        isLive.value = true;
-        listenForUpdates(() => {
-            // Reload all dashboard data when simulation pushes new data
-            router.reload({
-                only: ['summary', 'textSummary'],
-                preserveScroll: true,
-                onSuccess: () => {
-                    lastUpdated.value = new Date().toLocaleTimeString();
-                },
-            });
-        });
-    } catch {
-        // WebSocket is optional — dashboard works fine without it
-        isLive.value = false;
-    }
+// ── Chart data: Portfolio Cost Pie (Committed vs Paid) ──
+const portfolioCostPie = computed(() => {
+    const committed = props.portfolio.totalCommitted || 0;
+    const paid = props.portfolio.totalPaid || 0;
+    const remaining = Math.max(0, committed - paid);
+    return [
+        { name: 'Paid to Date', value: paid, color: '#5ba5b5' },
+        { name: 'Remaining', value: remaining, color: '#6889c4' },
+    ];
 });
 
-onUnmounted(() => {
-    disconnect();
+// ── Chart data: Sector Investment Bar ──
+const sectorInvestmentData = computed(() => {
+    return (props.charts.sectorBreakdown || []).map(s => ({
+        sector: s.name,
+        committed: s.totalCost,
+        paid: s.totalPaid || 0,
+    }));
+});
+
+// ── Comparison Tab ──
+const comparisonMetrics = [
+    { key: 'project_count', label: 'Projects' },
+    { key: 'total_committed', label: 'Committed (USD)' },
+    { key: 'avg_progress', label: 'Avg Progress' },
+    { key: 'risk_count', label: 'Risks' },
+];
+const selectedMetric = ref('project_count');
+
+const comparisonBarData = computed(() => {
+    return props.directorateSummaries.map(d => ({
+        code: d.code,
+        project_count: d.project_count || 0,
+        total_committed: d.total_committed || 0,
+        avg_progress: d.avg_progress || 0,
+        risk_count: d.risk_count || 0,
+    }));
 });
 </script>
