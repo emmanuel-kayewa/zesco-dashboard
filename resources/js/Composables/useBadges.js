@@ -9,17 +9,21 @@ export function useBadges() {
      */
     const getProjectStatusColor = (status) => {
         const statusMap = {
+            'On Track': 'green',
             'on_track': 'green',
             'completed': 'green',
             'Completed': 'green',
+            'At Risk': 'red',
             'at_risk': 'amber',
             'Preparation': 'amber',
+            'Delayed': 'amber',
             'delayed': 'red',
             'Cancelled': 'red',
             'planning': 'blue',
             'in_progress': 'blue',
             'Execution': 'blue',
             'In Progress': 'blue',
+            'Commissioned': 'green',
             'Pending': 'gray',
         };
         
