@@ -36,7 +36,7 @@
                 <div v-for="setting in settings" :key="setting.key">
                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ setting.label || setting.key }}</label>
                     <input v-if="setting.type === 'number'" v-model="settingsForm[setting.key]" type="number" class="input-field w-full text-sm" />
-                    <input v-else-if="setting.type === 'boolean'" v-model="settingsForm[setting.key]" type="checkbox" class="rounded border-gray-300 text-zesco-600 focus:ring-zesco-500" />
+                    <input v-else-if="setting.type === 'boolean'" v-model="settingsForm[setting.key]" type="checkbox" class="rounded border-gray-300 text-[var(--palette-accent)] focus:ring-[var(--palette-accent)]" />
                     <input v-else v-model="settingsForm[setting.key]" type="text" class="input-field w-full text-sm" />
                 </div>
                 <div class="md:col-span-2 lg:col-span-3">
@@ -84,7 +84,7 @@
                             </td>
                             <td class="py-2 px-3">
                                 <label class="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                                    <input v-model="user.whatsapp_opt_in" @change="updateUserWhatsApp(user)" type="checkbox" class="rounded border-gray-300 text-zesco-600 focus:ring-zesco-500" />
+                                    <input v-model="user.whatsapp_opt_in" @change="updateUserWhatsApp(user)" type="checkbox" class="rounded border-gray-300 text-[var(--palette-accent)] focus:ring-[var(--palette-accent)]" />
                                     <span>Opt-in</span>
                                 </label>
                             </td>
@@ -147,7 +147,7 @@
 
                         <div>
                             <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                                <input v-model="newUserForm.whatsapp_opt_in" type="checkbox" class="rounded border-gray-300 text-zesco-600 focus:ring-zesco-500" />
+                                <input v-model="newUserForm.whatsapp_opt_in" type="checkbox" class="rounded border-gray-300 text-[var(--palette-accent)] focus:ring-[var(--palette-accent)]" />
                                 <span>WhatsApp Opt-in</span>
                             </label>
                         </div>
