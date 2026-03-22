@@ -3,8 +3,8 @@
         <template #title>PP Weekly Reports</template>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-                <!-- Header -->
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <!-- Header (hidden when no reports) -->
+                <div v-if="reports.data?.length" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Weekly Brief Reports</h1>
                         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -37,18 +37,18 @@
                 </div>
 
                 <!-- Empty State -->
-                <div v-else class="text-center py-16">
-                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-700 mb-4">
-                        <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div v-else class="text-center py-24">
+                    <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gray-100 dark:bg-gray-700/60 mb-5">
+                        <svg class="w-20 h-20 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                     </div>
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">No weekly reports yet</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Get started by creating the first weekly brief report.</p>
-                    <Link v-if="canCreate && isPpRoute" href="/pp/weekly-reports/create" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-zesco-600 text-white text-sm font-medium hover:bg-zesco-700 transition shadow-sm">
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-2">No weekly reports yet</h3>
+                    <p v-if="canCreate && isPpRoute" class="text-sm text-gray-500 dark:text-gray-400 mb-6">Get started by creating the first weekly brief report.</p>
+                    <Button v-if="canCreate && isPpRoute" size="md" @click="router.visit('/pp/weekly-reports/create')">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
                         Create Report
-                    </Link>
+                    </Button>
                 </div>
 
                 <!-- Pagination -->
@@ -67,6 +67,7 @@ import { computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import WeeklyReportCard from '@/Components/Pp/WeeklyReportCard.vue';
+import Button from '@/Components/UI/Button.vue';
 
 const props = defineProps({
     reports: { type: Object, default: () => ({ data: [], links: [] }) },
