@@ -248,7 +248,7 @@
                     <div class="relative" data-user-menu>
                         <button
                             @click="showUserMenu = !showUserMenu"
-                            class="w-9 h-9 rounded-full bg-zesco-100 dark:bg-zesco-900/50 flex items-center justify-center hover:ring-2 hover:ring-zesco-300 dark:hover:ring-zesco-600 transition"
+                            class="w-9 h-9 rounded-full bg-zesco-100 dark:bg-zesco-900/50 flex items-center justify-center hover:ring-2 hover:ring-[var(--palette-accent-light)] dark:hover:ring-[var(--palette-accent-dark)] transition"
                             title="Account menu"
                         >
                             <span class="text-sm font-semibold text-zesco-600 dark:text-zesco-400">
