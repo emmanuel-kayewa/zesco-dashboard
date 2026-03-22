@@ -34,7 +34,7 @@
                 <Link href="/pp/dashboard/explore" class="btn-primary text-sm px-4 py-2 flex-shrink-0 whitespace-nowrap">
                     Portfolio Breakdown
                 </Link>
-                <Link href="/pp/dashboard/explore?rag_status=Red" class="btn-secondary text-sm px-4 py-2 flex-shrink-0 whitespace-nowrap">
+                <Link href="/pp/dashboard/explore" class="btn-secondary text-sm px-4 py-2 flex-shrink-0 whitespace-nowrap">
                     Critical Projects
                 </Link>
                 <Link href="/pp/projects" class="btn-secondary text-sm px-4 py-2 flex-shrink-0 whitespace-nowrap">
@@ -84,7 +84,7 @@
             <h3 class="text-lg font-bold text-gray-900 dark:text-white">Sectors at a Glance</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Click a card to explore that sector</p>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-5 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
             <Link v-for="card in ppData.sectorCards" :key="card.sector"
                   :href="`/pp/dashboard/explore?sector=${encodeURIComponent(card.sector)}`"
                   class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-7 hover:shadow-lg hover:border-[var(--palette-accent-lighter)] dark:hover:border-[var(--palette-accent-dark)] transition-all duration-200 cursor-pointer group">
@@ -116,15 +116,9 @@
                     <div class="flex items-center gap-1">
                         <span v-if="card.totalMw" class="text-xs text-gray-500">{{ card.totalMw }} MW</span>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="flex items-center gap-0.5 text-xs">
-                            <span class="w-2 h-2 rounded-full" :class="`bg-${getRagColor('Green')}-500`"></span>{{ card.ragCounts.Green || 0 }}
-                        </span>
-                        <span class="flex items-center gap-0.5 text-xs">
-                            <span class="w-2 h-2 rounded-full" :class="`bg-${getRagColor('Amber')}-500`"></span>{{ card.ragCounts.Amber || 0 }}
-                        </span>
-                        <span class="flex items-center gap-0.5 text-xs">
-                            <span class="w-2 h-2 rounded-full" :class="`bg-${getRagColor('Red')}-500`"></span>{{ card.ragCounts.Red || 0 }}
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span v-for="(count, healthStatus) in (card.statusCounts || {})" :key="healthStatus" v-show="count > 0" class="flex items-center gap-0.5 text-xs text-gray-500">
+                            <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: healthStatus === 'On Track' ? '#4ead7a' : healthStatus === 'Delayed' ? '#d4a24e' : '#cf6060' }"></span>{{ count }} {{ healthStatus }}
                         </span>
                     </div>
                 </div>
@@ -201,10 +195,8 @@ import AppLayout from '@/Components/Layout/AppLayout.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import { INVESTMENT, RAG } from '@/Composables/useChartPalette';
-import { useBadges } from '@/Composables/useBadges';
 import { useDirectorateStore } from '@/stores/useDirectorateStore';
 
-const { getRagColor } = useBadges();
 const directorateStore = useDirectorateStore();
 
 const props = defineProps({
