@@ -54,10 +54,10 @@ export const INVESTMENT = {
 
 // ── Status colours (mapped by common project statuses) ──
 export const STATUS = [
-    '#6889c4', // Execution
-    '#4ead7a', // Commissioned
-    '#d4a24e', // Preparation
-    '#a3adb8', // Other
+    '#4ead7a', // On Track
+    '#d4a24e', // Delayed
+    '#cf6060', // At Risk
+    '#a3adb8', // Unknown
 ];
 
 // ── Sector card colours ──
