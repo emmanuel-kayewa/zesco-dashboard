@@ -30,7 +30,7 @@
                             />
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Stage</label>
                             <Select
                                 v-model="statusFilter"
                                 :options="[
@@ -38,8 +38,9 @@
                                     { value: 'Preparation', label: 'Preparation' },
                                     { value: 'Completed', label: 'Completed' },
                                     { value: 'Cancelled', label: 'Cancelled' },
+                                    { value: 'Commissioned', label: 'Commissioned' },
                                 ]"
-                                placeholder="All Statuses"
+                                placeholder="All Stages"
                                 size="sm"
                                 class="w-full"
                             />
@@ -68,17 +69,18 @@
                         { value: 'Preparation', label: 'Preparation' },
                         { value: 'Completed', label: 'Completed' },
                         { value: 'Cancelled', label: 'Cancelled' },
+                        { value: 'Commissioned', label: 'Commissioned' },
                     ]"
-                    placeholder="All Statuses"
+                    placeholder="All Stages"
                     size="md"
                     class="w-36 hidden md:block"
                 />
                 
-                <Button variant="primary" size="sm" @click="openModal()">
-                    <!-- <span class="hidden sm:inline">+ New Project</span>
-                    <span class="sm:hidden">+ New</span> -->
-                    + New Project
+                <Button variant="secondary" size="sm" @click="showImport = true">
+                    <svg class="w-4 h-4 mr-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    Import
                 </Button>
+                <Button variant="primary" size="sm" @click="openModal()">+ New Project</Button>
             </div>
         </template>
 
@@ -89,11 +91,12 @@
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Code</th>
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Name</th>
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Sector</th>
-                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Health</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Stage</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Phase</th>
                         <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Cost (USD)</th>
                         <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">MW</th>
                         <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Progress</th>
-                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">RAG</th>
                         <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                     </tr>
                 </thead>
@@ -103,16 +106,16 @@
                         <td class="py-2 px-3 font-medium text-gray-900 dark:text-white max-w-xs truncate" :title="p.project_name">{{ p.project_name }}</td>
                         <td class="py-2 px-3 text-gray-500 hidden sm:table-cell">{{ p.sector }}</td>
                         <td class="py-2 px-3">
-                            <Badge variant="dot" :color="getProjectStatusColor(p.status)" :label="p.status" />
+                            <Badge v-if="p.status" variant="dot" :color="getProjectStatusColor(p.status)" :label="p.status" />
+                            <span v-else class="text-gray-400 text-xs">—</span>
                         </td>
+                        <td class="py-2 px-3 text-gray-500 hidden lg:table-cell">{{ p.project_stage || '—' }}</td>
+                        <td class="py-2 px-3 text-gray-500 hidden lg:table-cell">{{ p.lifecycle_phase || '—' }}</td>
                         <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200 hidden md:table-cell">{{ formatUsd(p.cost_usd) }}</td>
                         <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200 hidden lg:table-cell">{{ p.capacity_mw || '—' }}</td>
                         <td class="text-right py-2 px-3 hidden md:table-cell">
                             <span v-if="p.progress_pct !== null" class="font-semibold">{{ p.progress_pct }}%</span>
                             <span v-else class="text-gray-400">—</span>
-                        </td>
-                        <td class="text-center py-2 px-3">
-                            <Badge variant="dot" :color="getRagColor(p.rag_status)" :label="p.rag_status" />
                         </td>
                         <td class="text-center py-2 px-3">
                             <button @click="editEntry(p)" class="text-zesco-600 hover:text-zesco-800 text-xs mr-2">Edit</button>
@@ -136,46 +139,123 @@
     </Card>
 
     <!-- Modal -->
-    <Modal :show="showModal" :title="editingId ? 'Edit Project' : 'New Project'" max-width="2xl" @close="closeModal">
+    <Modal :show="showModal" :title="editingId ? 'Edit Project' : 'New Project'" max-width="4xl" @close="closeModal">
         <form @submit.prevent="submitEntry" class="space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input v-model="form.project_code" label="Project Code" placeholder="e.g. GEN-001" required :error="form.errors.project_code" />
-                <Input v-model="form.project_name" label="Project Name" placeholder="Project name" required :error="form.errors.project_name" />
+            <!-- Section tabs -->
+            <div class="flex border-b border-gray-200 dark:border-gray-700 gap-1 overflow-x-auto">
+                <button v-for="tab in formTabs" :key="tab.key" type="button"
+                    @click="activeFormTab = tab.key"
+                    class="px-3 py-2 text-xs font-medium whitespace-nowrap border-b-2 transition-colors"
+                    :class="activeFormTab === tab.key ? 'border-zesco-600 text-zesco-600' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
+                    {{ tab.label }}
+                </button>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                <Select v-model="form.sector" :options="sectorOptions" label="Sector" required :error="form.errors.sector" />
-                <Input v-model="form.sub_sector" label="Sub-Sector" placeholder="e.g. Utility Scale Solar" :error="form.errors.sub_sector" />
-                <Select v-model="form.status" :options="statusOptions" label="Status" required :error="form.errors.status" />
+
+            <!-- Project Info -->
+            <div v-show="activeFormTab === 'info'">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                    <Input v-model="form.project_code" label="Project Code" placeholder="e.g. GEN-001" required :error="form.errors.project_code" />
+                    <Input v-model="form.project_name" label="Project Name" placeholder="Project name" required :error="form.errors.project_name" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+                    <Select v-model="form.sector" :options="sectorOptions" label="Sector" required :error="form.errors.sector" />
+                    <Input v-model="form.sub_sector" label="Sub-Sector" placeholder="e.g. Utility Scale Solar" :error="form.errors.sub_sector" />
+                    <Select v-model="form.project_stage" :options="projectStageOptions" label="Project Stage" required :error="form.errors.project_stage" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+                    <Select v-model="form.status" :options="healthStatusOptions" label="Health Status" :error="form.errors.status" />
+                    <Input v-model="form.programme" label="Programme" placeholder="e.g. Renewables" :error="form.errors.programme" />
+                    <Input v-model="form.province" label="Province" :error="form.errors.province" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <Input v-model="form.district" label="District" :error="form.errors.district" />
+                </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                <Input v-model="form.programme" label="Programme" placeholder="e.g. Renewables" :error="form.errors.programme" />
-                <Input v-model="form.province" label="Province" :error="form.errors.province" />
-                <Input v-model="form.district" label="District" :error="form.errors.district" />
+
+            <!-- Classification (REMs) -->
+            <div v-show="activeFormTab === 'classification'">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+                    <Input v-model="form.energy_type" label="Energy Type" placeholder="e.g. Solar PV" :error="form.errors.energy_type" />
+                    <Select v-model="form.renewable_flag" :options="boolOptions" label="Renewable" :error="form.errors.renewable_flag" />
+                    <Input v-model="form.market_segment" label="Market Segment" placeholder="e.g. Utility" :error="form.errors.market_segment" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+                    <Input v-model="form.ownership_model" label="Ownership Model" placeholder="e.g. ZESCO Owned" :error="form.errors.ownership_model" />
+                    <Input v-model="form.owner_group" label="Owner Group" placeholder="e.g. ZESCO" :error="form.errors.owner_group" />
+                    <Input v-model="form.owner_entity" label="Owner Entity" :error="form.errors.owner_entity" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <Select v-model="form.is_ipp" :options="boolOptions" label="IPP" :error="form.errors.is_ipp" />
+                    <Select v-model="form.grid_connected" :options="boolOptions" label="Grid Connected" :error="form.errors.grid_connected" />
+                    <Select v-model="form.owner_subsidiary_flag" :options="boolOptions" label="Subsidiary" :error="form.errors.owner_subsidiary_flag" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                    <Input v-model="form.owner_subsidiary_name" label="Subsidiary Name" :error="form.errors.owner_subsidiary_name" />
+                    <Select v-model="form.lifecycle_phase" :options="lifecycleOptions" label="Lifecycle Phase" :error="form.errors.lifecycle_phase" />
+                </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                <Input v-model="form.contractor" label="Contractor" :error="form.errors.contractor" />
-                <Input v-model="form.developer" label="Developer" :error="form.errors.developer" />
-                <Input v-model="form.funder" label="Funder" :error="form.errors.funder" />
+
+            <!-- People & Schedule -->
+            <div v-show="activeFormTab === 'schedule'">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+                    <Input v-model="form.contractor" label="Contractor" :error="form.errors.contractor" />
+                    <Input v-model="form.developer" label="Developer" :error="form.errors.developer" />
+                    <Input v-model="form.project_manager" label="Project Manager" :error="form.errors.project_manager" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+                    <Input v-model="form.planned_start" type="date" label="Planned Start" :error="form.errors.planned_start" />
+                    <Input v-model="form.planned_finish" type="date" label="Planned Finish" :error="form.errors.planned_finish" />
+                    <Input v-model="form.forecast_finish" type="date" label="Forecast Finish" :error="form.errors.forecast_finish" />
+                    <Input v-model="form.cod_planned" type="date" label="COD Planned" :error="form.errors.cod_planned" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <Input v-model="form.cod_actual" type="date" label="COD Actual" :error="form.errors.cod_actual" />
+                    <Input v-model="form.commissioned_date" type="date" label="Commissioned Date" :error="form.errors.commissioned_date" />
+                    <Input v-model="form.last_update_date" type="date" label="Last Update Date" :error="form.errors.last_update_date" />
+                </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <Input v-model="form.funding_type" label="Funding Type" placeholder="e.g. BOT" :error="form.errors.funding_type" />
-                <Input v-model="form.cost_usd" type="number" step="0.01" min="0" label="Cost (USD)" :error="form.errors.cost_usd" />
-                <Input v-model="form.cost_zmw" type="number" step="0.01" min="0" label="Cost (ZMW)" :error="form.errors.cost_zmw" />
-                <Input v-model="form.capacity_mw" type="number" step="0.001" min="0" label="Capacity (MW)" :error="form.errors.capacity_mw" />
+
+            <!-- Financial -->
+            <div v-show="activeFormTab === 'financial'">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+                    <Input v-model="form.cost_usd" type="number" step="0.01" min="0" label="Cost (USD)" :error="form.errors.cost_usd" />
+                    <Input v-model="form.cost_zmw" type="number" step="0.01" min="0" label="Cost (ZMW)" :error="form.errors.cost_zmw" />
+                    <Input v-model="form.approved_budget" type="number" step="0.01" min="0" label="Approved Budget" :error="form.errors.approved_budget" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <Input v-model="form.committed_cost" type="number" step="0.01" min="0" label="Committed Cost" :error="form.errors.committed_cost" />
+                    <Input v-model="form.actual_spend" type="number" step="0.01" min="0" label="Actual Spend" :error="form.errors.actual_spend" />
+                    <Input v-model="form.forecast_at_completion" type="number" step="0.01" min="0" label="Forecast at Completion" :error="form.errors.forecast_at_completion" />
+                </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <Input v-model="form.commissioned_mw" type="number" step="0.001" min="0" label="Commissioned MW" placeholder="Leave empty for auto-calc" :error="form.errors.commissioned_mw" />
-                <Input v-model="form.progress_pct" type="number" step="0.01" min="0" max="100" label="Progress (%)" :error="form.errors.progress_pct" />
-                <Input v-model="form.cod_planned" type="date" label="COD Planned" :error="form.errors.cod_planned" />
-                <Select v-model="form.rag_status" :options="ragOptions" label="RAG Status" required :error="form.errors.rag_status" />
+
+            <!-- Capacity & Status -->
+            <div v-show="activeFormTab === 'capacity'">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+                    <Input v-model="form.capacity_mw" type="number" step="0.001" min="0" label="Capacity (MW)" :error="form.errors.capacity_mw" />
+                    <Input v-model="form.commissioned_mw" type="number" step="0.001" min="0" label="Commissioned MW" :error="form.errors.commissioned_mw" />
+                    <Input v-model="form.commissioned_mw_to_date" type="number" step="0.001" min="0" label="Commissioned MW to Date" :error="form.errors.commissioned_mw_to_date" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <Input v-model="form.commissioned_capacity_mw" type="number" step="0.001" min="0" label="Commissioned Capacity (MW)" :error="form.errors.commissioned_capacity_mw" />
+                    <Input v-model="form.progress_pct" type="number" step="0.01" min="0" max="100" label="Progress (%)" :error="form.errors.progress_pct" />
+                </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input v-model="form.last_update_date" type="date" label="Last Update Date" :error="form.errors.last_update_date" />
+
+            <!-- Notes -->
+            <div v-show="activeFormTab === 'notes'">
+                <div class="space-y-3">
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Key Issue Summary</label>
+                        <textarea v-model="form.key_issue_summary" rows="3" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Key issues or notes..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Next Key Decision</label>
+                        <textarea v-model="form.next_decision" rows="2" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Next key decision or milestone..."></textarea>
+                    </div>
+                </div>
             </div>
-            <div class="w-full">
-                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Key Issue Summary</label>
-                <textarea v-model="form.key_issue_summary" rows="3" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Key issues or notes..."></textarea>
-            </div>
+
             <div class="flex items-center gap-3 pt-2">
                 <Button type="submit" variant="primary" size="md" :disabled="form.processing" class="flex-1">
                     {{ form.processing ? 'Saving...' : (editingId ? 'Update Project' : 'Create Project') }}
@@ -184,6 +264,9 @@
             </div>
         </form>
     </Modal>
+
+    <!-- Import Modal -->
+    <PpImportModal :show="showImport" entity="projects" @close="showImport = false" @imported="() => { showImport = false; router.reload(); }" />
 </template>
 
 <script setup>
@@ -195,9 +278,10 @@ import Select from '@/Components/UI/Select.vue';
 import Button from '@/Components/UI/Button.vue';
 import Modal from '@/Components/UI/Modal.vue';
 import Badge from '@/Components/UI/Badge.vue';
+import PpImportModal from '@/Components/PpImportModal.vue';
 import { useBadges } from '@/Composables/useBadges';
 
-const { getProjectStatusColor, getRagColor } = useBadges();
+const { getProjectStatusColor } = useBadges();
 
 const props = defineProps({
     projects: { type: Object, default: () => ({ data: [], links: [] }) },
@@ -207,6 +291,8 @@ const props = defineProps({
 const sectorFilter = ref(props.filters?.sector || '');
 const statusFilter = ref(props.filters?.status || '');
 const showFilters = ref(false);
+const showImport = ref(false);
+const activeFormTab = ref('info');
 
 // Close filter dropdown when clicking outside
 function handleClickOutside(event) {
@@ -225,11 +311,20 @@ onUnmounted(() => {
 
 watch([sectorFilter, statusFilter], () => {
     applyFilters();
-    showFilters.value = false; // Close dropdown when filter changes
+    showFilters.value = false;
 });
 
 const showModal = ref(false);
 const editingId = ref(null);
+
+const formTabs = [
+    { key: 'info', label: 'Project Info' },
+    { key: 'classification', label: 'Classification' },
+    { key: 'schedule', label: 'People & Schedule' },
+    { key: 'financial', label: 'Financial' },
+    { key: 'capacity', label: 'Capacity & Status' },
+    { key: 'notes', label: 'Notes' },
+];
 
 const sectorOptions = [
     { value: 'Generation', label: 'Generation' },
@@ -237,29 +332,49 @@ const sectorOptions = [
     { value: 'Distribution', label: 'Distribution' },
     { value: 'IPP', label: 'IPP' },
 ];
-const statusOptions = [
+const projectStageOptions = [
     { value: 'Execution', label: 'Execution' },
     { value: 'Preparation', label: 'Preparation' },
     { value: 'Completed', label: 'Completed' },
     { value: 'Cancelled', label: 'Cancelled' },
+    { value: 'Commissioned', label: 'Commissioned' },
 ];
-const ragOptions = [
-    { value: 'Red', label: 'Red' },
-    { value: 'Amber', label: 'Amber' },
-    { value: 'Green', label: 'Green' },
+const healthStatusOptions = [
+    { value: 'On Track', label: 'On Track' },
+    { value: 'Delayed', label: 'Delayed' },
+    { value: 'At Risk', label: 'At Risk' },
+];
+const lifecycleOptions = [
+    { value: 'Implementation', label: 'Implementation' },
+    { value: 'Commissioning/Operational', label: 'Commissioning/Operational' },
+    { value: 'Procurement', label: 'Procurement' },
+    { value: 'Contracting', label: 'Contracting' },
+];
+const boolOptions = [
+    { value: '1', label: 'Yes' },
+    { value: '0', label: 'No' },
 ];
 
 const form = useForm({
-    project_code: '', project_name: '', sector: 'Generation', sub_sector: '', status: 'Preparation',
-    programme: '', province: '', district: '', contractor: '', developer: '', funder: '', funding_type: '',
+    project_code: '', project_name: '', sector: 'Generation', sub_sector: '', project_stage: 'Preparation', status: '',
+    programme: '', province: '', district: '', contractor: '', developer: '',
     cost_usd: null, cost_zmw: null, capacity_mw: null, commissioned_mw: null, progress_pct: null,
-    cod_planned: '', key_issue_summary: '', last_update_date: '', rag_status: 'Amber', notes: '',
+    cod_planned: '', key_issue_summary: '', last_update_date: '', notes: '',
+    // REMs classification
+    energy_type: '', renewable_flag: '', market_segment: '', ownership_model: '',
+    owner_group: '', owner_entity: '', is_ipp: '', commissioned_mw_to_date: null,
+    grid_connected: '', cod_actual: '', commissioned_date: '', owner_subsidiary_name: '',
+    owner_subsidiary_flag: '', commissioned_capacity_mw: null, lifecycle_phase: '',
+    // PMO
+    project_manager: '', planned_start: '', planned_finish: '', forecast_finish: '',
+    approved_budget: null, committed_cost: null, actual_spend: null, forecast_at_completion: null,
+    next_decision: '',
 });
 
 function applyFilters() {
     const params = {};
     if (sectorFilter.value) params.sector = sectorFilter.value;
-    if (statusFilter.value) params.status = statusFilter.value;
+    if (statusFilter.value) params.project_stage = statusFilter.value;
     router.get('/pp/projects', params, { preserveState: true, preserveScroll: true });
 }
 
@@ -284,6 +399,7 @@ function editEntry(p) {
     Object.keys(form.data()).forEach(k => {
         if (k in p) form[k] = p[k] ?? (typeof form[k] === 'number' ? null : '');
     });
+    activeFormTab.value = 'info';
     showModal.value = true;
 }
 
@@ -291,8 +407,8 @@ function resetForm() {
     editingId.value = null;
     form.reset();
     form.sector = 'Generation';
-    form.status = 'Preparation';
-    form.rag_status = 'Amber';
+    form.project_stage = 'Preparation';
+    activeFormTab.value = 'info';
 }
 
 function deleteEntry(id) {
