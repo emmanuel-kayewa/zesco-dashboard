@@ -23,6 +23,8 @@ use App\Http\Controllers\PpSafeguardController;
 use App\Http\Controllers\PpProgrammeOutputController;
 use App\Http\Controllers\PpGridImpactStudyController;
 use App\Http\Controllers\PpWeeklyReportController;
+use App\Http\Controllers\PpWorkstreamController;
+use App\Http\Controllers\PpImportController;
 use App\Http\Controllers\PreferenceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -134,6 +136,14 @@ Route::middleware(app()->environment('local')
         Route::resource('grid-impact-studies', PpGridImpactStudyController::class)->only(['index', 'store', 'update', 'destroy'])->names([
             'index' => 'grid-impact-studies.index', 'store' => 'grid-impact-studies.store', 'update' => 'grid-impact-studies.update', 'destroy' => 'grid-impact-studies.destroy',
         ]);
+        Route::resource('workstreams', PpWorkstreamController::class)->only(['index', 'store', 'update', 'destroy'])->names([
+            'index' => 'workstreams.index', 'store' => 'workstreams.store', 'update' => 'workstreams.update', 'destroy' => 'workstreams.destroy',
+        ]);
+
+        // PP Import (CSV / Excel upload)
+        Route::post('/import/parse', [PpImportController::class, 'parseFile'])->name('import.parse');
+        Route::post('/import/confirm', [PpImportController::class, 'confirmImport'])->name('import.confirm');
+        Route::get('/import/template/{entity}', [PpImportController::class, 'downloadTemplate'])->name('import.template');
 
         // PP Weekly Reports (CRUD for PP users)
         Route::resource('weekly-reports', PpWeeklyReportController::class)->names([
