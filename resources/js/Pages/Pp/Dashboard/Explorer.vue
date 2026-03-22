@@ -112,14 +112,12 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <template v-for="(bd, dim) in explorerData.breakdowns" :key="dim">
-                    <!-- Skip RAG status, funder, and already filtered dimensions in Classic View -->
-                    <Card v-if="dim !== 'rag_status' && dim !== 'funder' && !bd.isFiltered" :title="`Projects by ${bd.label}`">
-                        <!-- Use 3D pie for sector/RAG -->
+                    <!-- Skip lifecycle_phase, energy_type, and already filtered dimensions in Classic View -->
+                    <Card v-if="dim !== 'lifecycle_phase' && dim !== 'energy_type' && !bd.isFiltered" :title="`Projects by ${bd.label}`">
+                        <!-- Use 3D pie for sector -->
                         <Pie3DChart
-                            v-if="dim === 'sector' || dim === 'rag_status'"
-                            :data="dim === 'rag_status'
-                                ? bd.data
-                                : bd.data.map(d => ({ name: d.name, value: d.value }))"
+                            v-if="dim === 'sector'"
+                            :data="bd.data.map(d => ({ name: d.name, value: d.value }))"
                             height="300px"
                             :show-legend="false"
                             @chart-click="(p) => addDimensionFilter(dim, p.name)"
