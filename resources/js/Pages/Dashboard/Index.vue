@@ -154,7 +154,7 @@
                         v-for="d in directorateSummaries"
                         :key="d.id"
                         :href="`/dashboard/directorate/${d.slug}`"
-                        class="block p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-executive-md hover:border-zesco-200 dark:hover:border-zesco-700 transition-all duration-200"
+                        class="block p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-executive-md hover:border-[var(--palette-accent-lighter)] dark:hover:border-[var(--palette-accent-dark)] transition-all duration-200"
                     >
                         <div class="flex items-center gap-3 mb-3">
                             <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: d.color }"></div>
