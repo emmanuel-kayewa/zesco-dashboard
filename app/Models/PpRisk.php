@@ -9,6 +9,7 @@ class PpRisk extends Model
 {
     protected $fillable = [
         'risk_code',
+        'record_type',
         'pp_project_id',
         'risk_category',
         'risk_description',
@@ -20,15 +21,19 @@ class PpRisk extends Model
         'owner',
         'due_date',
         'status',
+        'created_date',
+        'days_open',
         'notes',
         'entered_by',
     ];
 
     protected $casts = [
-        'due_date'   => 'date',
-        'likelihood' => 'integer',
-        'impact'     => 'integer',
-        'severity'   => 'integer',
+        'due_date'     => 'date',
+        'created_date' => 'date',
+        'likelihood'   => 'integer',
+        'impact'       => 'integer',
+        'severity'     => 'integer',
+        'days_open'    => 'integer',
     ];
 
     public function project(): BelongsTo

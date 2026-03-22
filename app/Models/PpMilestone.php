@@ -11,14 +11,24 @@ class PpMilestone extends Model
         'milestone_code',
         'pp_project_id',
         'milestone',
+        'category',
+        'baseline_date',
+        'forecast_date',
         'actual_date',
+        'weight_pct',
+        'delay_days',
+        'owner',
         'status',
         'notes',
         'entered_by',
     ];
 
     protected $casts = [
-        'actual_date' => 'date',
+        'baseline_date' => 'date',
+        'forecast_date' => 'date',
+        'actual_date'   => 'date',
+        'weight_pct'    => 'decimal:2',
+        'delay_days'    => 'integer',
     ];
 
     public function project(): BelongsTo
