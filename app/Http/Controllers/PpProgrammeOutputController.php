@@ -55,24 +55,24 @@ class PpProgrammeOutputController extends Controller
         return redirect()->back()->with('success', 'Programme output created successfully.');
     }
 
-    public function update(PpProgrammeOutputRequest $request, PpProgrammeOutput $ppProgrammeOutput)
+    public function update(PpProgrammeOutputRequest $request, PpProgrammeOutput $programmeOutput)
     {
         $this->enforcePpAccess($request);
 
-        $old = $ppProgrammeOutput->toArray();
-        $ppProgrammeOutput->update($request->validated());
+        $old = $programmeOutput->toArray();
+        $programmeOutput->update($request->validated());
 
-        AuditLog::log('update', 'PP programme output updated', $ppProgrammeOutput, $old, $ppProgrammeOutput->fresh()->toArray());
+        AuditLog::log('update', 'PP programme output updated', $programmeOutput, $old, $programmeOutput->fresh()->toArray());
 
         return redirect()->back()->with('success', 'Programme output updated successfully.');
     }
 
-    public function destroy(Request $request, PpProgrammeOutput $ppProgrammeOutput)
+    public function destroy(Request $request, PpProgrammeOutput $programmeOutput)
     {
         $this->enforcePpAccess($request);
 
-        AuditLog::log('delete', 'PP programme output deleted', $ppProgrammeOutput);
-        $ppProgrammeOutput->delete();
+        AuditLog::log('delete', 'PP programme output deleted', $programmeOutput);
+        $programmeOutput->delete();
 
         return redirect()->back()->with('success', 'Programme output deleted successfully.');
     }

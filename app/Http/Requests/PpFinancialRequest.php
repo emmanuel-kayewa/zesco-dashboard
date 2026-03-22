@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class PpFinancialRequest extends FormRequest
 {
@@ -13,13 +14,11 @@ class PpFinancialRequest extends FormRequest
 
     public function rules(): array
     {
-        $uniqueRule = 'unique:pp_financials,finance_code';
-        if ($this->route('pp_financial')) {
-            $uniqueRule .= ',' . $this->route('pp_financial');
-        }
-
         return [
-            'finance_code'     => "required|string|max:30|{$uniqueRule}",
+            'finance_code'     => [
+                'required', 'string', 'max:30',
+                Rule::unique('pp_financials', 'finance_code')->ignore($this->route('financial')),
+            ],
             'pp_project_id'    => 'nullable|exists:pp_projects,id',
             'as_of_date'       => 'required|date',
             'committed_amount' => 'nullable|numeric|min:0',

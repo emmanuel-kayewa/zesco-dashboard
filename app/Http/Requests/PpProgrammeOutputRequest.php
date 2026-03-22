@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class PpProgrammeOutputRequest extends FormRequest
 {
@@ -13,13 +14,11 @@ class PpProgrammeOutputRequest extends FormRequest
 
     public function rules(): array
     {
-        $uniqueRule = 'unique:pp_programme_outputs,output_code';
-        if ($this->route('pp_programme_output')) {
-            $uniqueRule .= ',' . $this->route('pp_programme_output');
-        }
-
         return [
-            'output_code'             => "required|string|max:30|{$uniqueRule}",
+            'output_code'             => [
+                'required', 'string', 'max:30',
+                Rule::unique('pp_programme_outputs', 'output_code')->ignore($this->route('programme_output')),
+            ],
             'programme'               => 'required|string|max:255',
             'period'                  => 'required|string|max:50',
             'connections_delivered'    => 'nullable|integer|min:0',

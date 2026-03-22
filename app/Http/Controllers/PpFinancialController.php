@@ -64,24 +64,24 @@ class PpFinancialController extends Controller
         return redirect()->back()->with('success', 'Financial record created successfully.');
     }
 
-    public function update(PpFinancialRequest $request, PpFinancial $ppFinancial)
+    public function update(PpFinancialRequest $request, PpFinancial $financial)
     {
         $this->enforcePpAccess($request);
 
-        $old = $ppFinancial->toArray();
-        $ppFinancial->update($request->validated());
+        $old = $financial->toArray();
+        $financial->update($request->validated());
 
-        AuditLog::log('update', 'PP financial updated', $ppFinancial, $old, $ppFinancial->fresh()->toArray());
+        AuditLog::log('update', 'PP financial updated', $financial, $old, $financial->fresh()->toArray());
 
         return redirect()->back()->with('success', 'Financial record updated successfully.');
     }
 
-    public function destroy(Request $request, PpFinancial $ppFinancial)
+    public function destroy(Request $request, PpFinancial $financial)
     {
         $this->enforcePpAccess($request);
 
-        AuditLog::log('delete', 'PP financial deleted', $ppFinancial);
-        $ppFinancial->delete();
+        AuditLog::log('delete', 'PP financial deleted', $financial);
+        $financial->delete();
 
         return redirect()->back()->with('success', 'Financial record deleted successfully.');
     }

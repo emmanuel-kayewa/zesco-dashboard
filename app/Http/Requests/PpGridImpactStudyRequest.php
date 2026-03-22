@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class PpGridImpactStudyRequest extends FormRequest
 {
@@ -13,13 +14,11 @@ class PpGridImpactStudyRequest extends FormRequest
 
     public function rules(): array
     {
-        $uniqueRule = 'unique:pp_grid_impact_studies,study_code';
-        if ($this->route('grid_impact_study')) {
-            $uniqueRule .= ',' . $this->route('grid_impact_study');
-        }
-
         return [
-            'study_code'           => "required|string|max:30|{$uniqueRule}",
+            'study_code'           => [
+                'required', 'string', 'max:30',
+                Rule::unique('pp_grid_impact_studies', 'study_code')->ignore($this->route('grid_impact_study')),
+            ],
             'pp_project_id'        => 'nullable|exists:pp_projects,id',
             'study_type'           => 'required|string|in:report,inception',
             'name'                 => 'required|string|max:255',

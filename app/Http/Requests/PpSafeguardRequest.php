@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class PpSafeguardRequest extends FormRequest
 {
@@ -13,13 +14,11 @@ class PpSafeguardRequest extends FormRequest
 
     public function rules(): array
     {
-        $uniqueRule = 'unique:pp_safeguards,record_code';
-        if ($this->route('pp_safeguard')) {
-            $uniqueRule .= ',' . $this->route('pp_safeguard');
-        }
-
         return [
-            'record_code'       => "required|string|max:30|{$uniqueRule}",
+            'record_code'       => [
+                'required', 'string', 'max:30',
+                Rule::unique('pp_safeguards', 'record_code')->ignore($this->route('safeguard')),
+            ],
             'scope'             => 'required|string|max:255',
             'pp_project_id'     => 'nullable|exists:pp_projects,id',
             'wayleave_received' => 'nullable|integer|min:0',

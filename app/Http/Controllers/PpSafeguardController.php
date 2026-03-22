@@ -59,24 +59,24 @@ class PpSafeguardController extends Controller
         return redirect()->back()->with('success', 'Safeguard record created successfully.');
     }
 
-    public function update(PpSafeguardRequest $request, PpSafeguard $ppSafeguard)
+    public function update(PpSafeguardRequest $request, PpSafeguard $safeguard)
     {
         $this->enforcePpAccess($request);
 
-        $old = $ppSafeguard->toArray();
-        $ppSafeguard->update($request->validated());
+        $old = $safeguard->toArray();
+        $safeguard->update($request->validated());
 
-        AuditLog::log('update', 'PP safeguard updated', $ppSafeguard, $old, $ppSafeguard->fresh()->toArray());
+        AuditLog::log('update', 'PP safeguard updated', $safeguard, $old, $safeguard->fresh()->toArray());
 
         return redirect()->back()->with('success', 'Safeguard record updated successfully.');
     }
 
-    public function destroy(Request $request, PpSafeguard $ppSafeguard)
+    public function destroy(Request $request, PpSafeguard $safeguard)
     {
         $this->enforcePpAccess($request);
 
-        AuditLog::log('delete', 'PP safeguard deleted', $ppSafeguard);
-        $ppSafeguard->delete();
+        AuditLog::log('delete', 'PP safeguard deleted', $safeguard);
+        $safeguard->delete();
 
         return redirect()->back()->with('success', 'Safeguard record deleted successfully.');
     }

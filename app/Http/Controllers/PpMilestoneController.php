@@ -59,24 +59,24 @@ class PpMilestoneController extends Controller
         return redirect()->back()->with('success', 'Milestone created successfully.');
     }
 
-    public function update(PpMilestoneRequest $request, PpMilestone $ppMilestone)
+    public function update(PpMilestoneRequest $request, PpMilestone $milestone)
     {
         $this->enforcePpAccess($request);
 
-        $old = $ppMilestone->toArray();
-        $ppMilestone->update($request->validated());
+        $old = $milestone->toArray();
+        $milestone->update($request->validated());
 
-        AuditLog::log('update', 'PP milestone updated', $ppMilestone, $old, $ppMilestone->fresh()->toArray());
+        AuditLog::log('update', 'PP milestone updated', $milestone, $old, $milestone->fresh()->toArray());
 
         return redirect()->back()->with('success', 'Milestone updated successfully.');
     }
 
-    public function destroy(Request $request, PpMilestone $ppMilestone)
+    public function destroy(Request $request, PpMilestone $milestone)
     {
         $this->enforcePpAccess($request);
 
-        AuditLog::log('delete', 'PP milestone deleted', $ppMilestone);
-        $ppMilestone->delete();
+        AuditLog::log('delete', 'PP milestone deleted', $milestone);
+        $milestone->delete();
 
         return redirect()->back()->with('success', 'Milestone deleted successfully.');
     }

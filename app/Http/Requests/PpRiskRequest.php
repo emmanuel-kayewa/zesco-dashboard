@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class PpRiskRequest extends FormRequest
 {
@@ -13,13 +14,11 @@ class PpRiskRequest extends FormRequest
 
     public function rules(): array
     {
-        $uniqueRule = 'unique:pp_risks,risk_code';
-        if ($this->route('pp_risk')) {
-            $uniqueRule .= ',' . $this->route('pp_risk');
-        }
-
         return [
-            'risk_code'        => "required|string|max:20|{$uniqueRule}",
+            'risk_code'        => [
+                'required', 'string', 'max:20',
+                Rule::unique('pp_risks', 'risk_code')->ignore($this->route('risk')),
+            ],
             'pp_project_id'    => 'nullable|exists:pp_projects,id',
             'risk_category'    => 'required|string|max:255',
             'risk_description' => 'required|string|max:5000',

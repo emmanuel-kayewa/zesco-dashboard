@@ -60,26 +60,26 @@ class PpRiskController extends Controller
         return redirect()->back()->with('success', 'Risk created successfully.');
     }
 
-    public function update(PpRiskRequest $request, PpRisk $ppRisk)
+    public function update(PpRiskRequest $request, PpRisk $risk)
     {
         $this->enforcePpAccess($request);
 
-        $old = $ppRisk->toArray();
+        $old = $risk->toArray();
         $data = $request->validated();
         $data['severity'] = $data['likelihood'] * $data['impact'];
-        $ppRisk->update($data);
+        $risk->update($data);
 
-        AuditLog::log('update', 'PP risk updated', $ppRisk, $old, $ppRisk->fresh()->toArray());
+        AuditLog::log('update', 'PP risk updated', $risk, $old, $risk->fresh()->toArray());
 
         return redirect()->back()->with('success', 'Risk updated successfully.');
     }
 
-    public function destroy(Request $request, PpRisk $ppRisk)
+    public function destroy(Request $request, PpRisk $risk)
     {
         $this->enforcePpAccess($request);
 
-        AuditLog::log('delete', 'PP risk deleted', $ppRisk);
-        $ppRisk->delete();
+        AuditLog::log('delete', 'PP risk deleted', $risk);
+        $risk->delete();
 
         return redirect()->back()->with('success', 'Risk deleted successfully.');
     }

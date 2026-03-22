@@ -78,24 +78,24 @@ class PpProjectController extends Controller
         return redirect()->back()->with('success', 'Project created successfully.');
     }
 
-    public function update(PpProjectRequest $request, PpProject $ppProject)
+    public function update(PpProjectRequest $request, PpProject $project)
     {
         $this->enforcePpAccess($request);
 
-        $old = $ppProject->toArray();
-        $ppProject->update($request->validated());
+        $old = $project->toArray();
+        $project->update($request->validated());
 
-        AuditLog::log('update', 'PP project updated', $ppProject, $old, $ppProject->fresh()->toArray());
+        AuditLog::log('update', 'PP project updated', $project, $old, $project->fresh()->toArray());
 
         return redirect()->back()->with('success', 'Project updated successfully.');
     }
 
-    public function destroy(Request $request, PpProject $ppProject)
+    public function destroy(Request $request, PpProject $project)
     {
         $this->enforcePpAccess($request);
 
-        AuditLog::log('delete', 'PP project deleted', $ppProject);
-        $ppProject->delete();
+        AuditLog::log('delete', 'PP project deleted', $project);
+        $project->delete();
 
         return redirect()->back()->with('success', 'Project deleted successfully.');
     }

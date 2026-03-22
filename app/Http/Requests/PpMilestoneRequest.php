@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class PpMilestoneRequest extends FormRequest
 {
@@ -13,13 +14,11 @@ class PpMilestoneRequest extends FormRequest
 
     public function rules(): array
     {
-        $uniqueRule = 'unique:pp_milestones,milestone_code';
-        if ($this->route('pp_milestone')) {
-            $uniqueRule .= ',' . $this->route('pp_milestone');
-        }
-
         return [
-            'milestone_code' => "required|string|max:30|{$uniqueRule}",
+            'milestone_code' => [
+                'required', 'string', 'max:30',
+                Rule::unique('pp_milestones', 'milestone_code')->ignore($this->route('milestone')),
+            ],
             'pp_project_id'  => 'required|exists:pp_projects,id',
             'milestone'      => 'required|string|max:255',
             'actual_date'    => 'nullable|date',
