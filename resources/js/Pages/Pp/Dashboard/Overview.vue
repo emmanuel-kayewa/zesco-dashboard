@@ -87,7 +87,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-5 mb-8">
             <Link v-for="card in ppData.sectorCards" :key="card.sector"
                   :href="`/pp/dashboard/explore?sector=${encodeURIComponent(card.sector)}`"
-                  class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-7 hover:shadow-lg hover:border-zesco-200 dark:hover:border-zesco-600 transition-all duration-200 cursor-pointer group">
+                  class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-7 hover:shadow-lg hover:border-[var(--palette-accent-lighter)] dark:hover:border-[var(--palette-accent-dark)] transition-all duration-200 cursor-pointer group">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 min-w-0">
                         <div class="w-3 h-3 rounded-full flex-shrink-0" :style="{ backgroundColor: card.color }"></div>
@@ -151,7 +151,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">IPP grid connection study tracker overview</p>
             </div>
             <Link href="/pp/dashboard/grid-studies"
-                  class="block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 hover:shadow-lg hover:border-purple-200 dark:hover:border-purple-600 transition-all duration-200 cursor-pointer group">
+                  class="block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 hover:shadow-lg hover:border-[var(--palette-accent-lighter)] dark:hover:border-[var(--palette-accent-dark)] transition-all duration-200 cursor-pointer group">
                 <div class="flex flex-col lg:flex-row lg:items-center gap-6">
                     <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 flex-1">
                         <div>
