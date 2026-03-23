@@ -1,7 +1,7 @@
 <template>
-    <span :class="badgeClasses">
+    <span :class="badgeClasses" :style="paletteStyle">
         <!-- Dot (for dot and filled-dot variants) -->
-        <svg v-if="variant === 'dot' || variant === 'filled-dot'" class="size-1.5" :class="dotClasses" viewBox="0 0 6 6" aria-hidden="true">
+        <svg v-if="variant === 'dot' || variant === 'filled-dot'" class="size-1.5" :class="dotClasses" :style="paletteDotStyle" viewBox="0 0 6 6" aria-hidden="true">
             <circle cx="3" cy="3" r="3" />
         </svg>
         
@@ -22,7 +22,7 @@ const props = defineProps({
     color: {
         type: String,
         default: 'gray',
-        validator: (value) => ['gray', 'red', 'yellow', 'green', 'blue', 'indigo', 'purple', 'pink', 'orange', 'amber'].includes(value)
+        validator: (value) => ['gray', 'red', 'yellow', 'green', 'blue', 'indigo', 'purple', 'pink', 'orange', 'amber', 'palette'].includes(value)
     },
     label: {
         type: String,
@@ -34,15 +34,41 @@ const props = defineProps({
     }
 });
 
+const isPalette = computed(() => props.color === 'palette');
+const isDotPalette = computed(() => (props.dotColor || props.color) === 'palette');
+
+const paletteStyle = computed(() => {
+    if (!isPalette.value) return {};
+    if (props.variant === 'filled') {
+        return {
+            backgroundColor: 'var(--palette-accent-lighter)',
+            color: 'var(--palette-accent-dark)',
+            '--tw-ring-color': 'var(--palette-accent-light)',
+        };
+    }
+    if (props.variant === 'filled-dot') {
+        return {
+            backgroundColor: 'var(--palette-accent-lighter)',
+            color: 'var(--palette-accent-dark)',
+        };
+    }
+    return {};
+});
+
+const paletteDotStyle = computed(() => {
+    if (!isDotPalette.value) return {};
+    return { fill: 'var(--palette-accent)' };
+});
+
 const badgeClasses = computed(() => {
     const base = 'inline-flex items-center rounded-md px-2 py-1 text-xs font-medium';
     
     if (props.variant === 'filled') {
-        return [base, filledColorClasses.value];
+        return [base, isPalette.value ? 'ring-1 ring-inset' : filledColorClasses.value];
     } else if (props.variant === 'dot') {
         return [base, 'gap-x-1.5', dotVariantClasses.value];
     } else if (props.variant === 'filled-dot') {
-        return [base, 'gap-x-1.5', filledDotColorClasses.value];
+        return [base, 'gap-x-1.5', isPalette.value ? '' : filledDotColorClasses.value];
     }
     
     return base;
