@@ -160,21 +160,22 @@
                         />
                     </Card>
                 </template>
+                <!-- ── Investment Chart (always shown if sectors vary) ── -->
+                <div v-if="explorerData.sectorInvestment.length > 1">
+                    <Card title="Investment by Sector — Committed vs Paid (USD)">
+                        <BarChart
+                            :data="investmentBarData"
+                            xField="label"
+                            :multiSeries="investmentSeries"
+                            height="320px"
+                            @chart-click="(p) => addDimensionFilter('sector', p.name)"
+                        />
+                    </Card>
+                </div>
             </div>
         </template>
 
-            <!-- ── Investment Chart (always shown if sectors vary) ── -->
-        <div v-if="explorerData.sectorInvestment.length > 1" class="mb-8">
-            <Card title="Investment by Sector — Committed vs Paid (USD)">
-                <BarChart
-                    :data="investmentBarData"
-                    xField="label"
-                    :multiSeries="investmentSeries"
-                    height="320px"
-                    @chart-click="(p) => addDimensionFilter('sector', p.name)"
-                />
-            </Card>
-        </div>
+            
 
             <!-- ── Grid Impact Studies Banner (shows when IPP sector is filtered) ── -->
         <!-- <div v-if="isIppContext" class="mb-8">
