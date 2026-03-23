@@ -172,9 +172,9 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <ChartCard title="Capacity by Project Type (MW)" :baseHeight="320">
                             <template #default="{ zoomedHeight }">
-                                <PieChart
+                                <Pie3DChart
                                     :data="capacityByTypeData"
-                                    :height="zoomedHeight"
+                                    :height="zoomedHeight + 'px'"
                                     @chart-click="(p) => handleDrill('project_type', p)"
                                 />
                             </template>
@@ -205,9 +205,9 @@
                         </ChartCard>
                         <ChartCard title="Capacity by Status" :baseHeight="320">
                             <template #default="{ zoomedHeight }">
-                                <PieChart
+                                <Pie3DChart
                                     :data="capacityByStatusData"
-                                    :height="zoomedHeight"
+                                    :height="zoomedHeight + 'px'"
                                     @chart-click="(p) => handleDrill('status', p)"
                                 />
                             </template>
@@ -269,7 +269,7 @@ import AppLayout from '@/Components/Layout/AppLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import ChartCard from '@/Components/UI/ChartCard.vue';
 import PillTabs from '@/Components/UI/PillTabs.vue';
-import PieChart from '@/Components/Charts/PieChart.vue';
+import Pie3DChart from '@/Components/Charts/Pie3DChart.vue';
 import BarChart from '@/Components/Charts/BarChart.vue';
 
 const props = defineProps({
@@ -287,7 +287,7 @@ const backUrl = computed(() => {
     return '/weekly-reports';
 });
 
-const activeTab = ref('tabular');
+const activeTab = ref('visual');
 const activeDrillFilter = ref(null);
 
 // ── Section helpers ──────────────────────────────────────
