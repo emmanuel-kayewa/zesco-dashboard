@@ -30,8 +30,8 @@
                     <div v-for="(section, si) in form.sections" :key="si" class="space-y-0">
                         <Card>
                             <template #title>
-                                <div class="flex items-center gap-3 w-full min-w-0">
-                                    <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-zesco-100 dark:bg-zesco-900/30 text-zesco-700 dark:text-zesco-400 text-sm font-bold flex-shrink-0">
+                                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                                    <span class="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white text-xs sm:text-sm font-bold flex-shrink-0">
                                         {{ si + 1 }}
                                     </span>
                                     <Input
@@ -43,11 +43,11 @@
                                 </div>
                             </template>
                             <template #actions>
-                                <div class="flex items-center gap-2">
-                                    <button type="button" @click="triggerUpload(si)" :disabled="uploading" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border border-emerald-300 dark:border-emerald-700 transition" title="Upload CSV or Excel">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <Button type="button" @click="triggerUpload(si)" :disabled="uploading" variant="primary" outline size="xs" title="Upload CSV or Excel">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                                         {{ uploading ? 'Parsing...' : 'Upload' }}
-                                    </button>
+                                    </Button>
                                     <input
                                         :ref="el => fileInputRefs[si] = el"
                                         type="file"
@@ -55,7 +55,7 @@
                                         class="hidden"
                                         @change="handleFileUpload($event, si)"
                                     />
-                                    <Badge :label="sectionTypeLabel(section.section_type)" variant="filled-dot" color="blue" />
+                                    <Badge :label="sectionTypeLabel(section.section_type)" variant="filled-dot" color="palette" />
                                 </div>
                             </template>
 
@@ -124,10 +124,10 @@
                                     </table>
                                 </div>
                                 <div class="mt-3">
-                                    <button type="button" @click="addProjectEntry(si)" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-zesco-600 dark:text-zesco-400 hover:bg-zesco-50 dark:hover:bg-zesco-900/20 border border-dashed border-zesco-300 dark:border-zesco-700 transition">
+                                    <Button type="button" @click="addProjectEntry(si)" variant="primary" outline size="xs" class="border-dashed">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
                                         Add Project
-                                    </button>
+                                    </Button>
                                 </div>
                             </template>
 
@@ -165,10 +165,10 @@
                                     </table>
                                 </div>
                                 <div class="mt-3">
-                                    <button type="button" @click="addNetMeteringEntry(si)" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-zesco-600 dark:text-zesco-400 hover:bg-zesco-50 dark:hover:bg-zesco-900/20 border border-dashed border-zesco-300 dark:border-zesco-700 transition">
+                                    <Button type="button" @click="addNetMeteringEntry(si)" variant="primary" outline size="xs" class="border-dashed">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
                                         Add Entry
-                                    </button>
+                                    </Button>
                                 </div>
                             </template>
                         </Card>
@@ -176,15 +176,12 @@
 
                     <!-- Notes / Comments -->
                     <Card title="Notes & Comments">
-                        <div>
-                            <textarea
-                                v-model="form.notes"
-                                rows="4"
-                                class="block w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-[var(--palette-accent)] focus:border-[var(--palette-accent)] dark:bg-gray-700 dark:border-gray-600 dark:text-white p-3"
-                                placeholder="Additional notes, phased completion dates, or any other relevant information..."
-                            ></textarea>
-                            <p v-if="form.errors.notes" class="text-red-500 text-xs mt-1">{{ form.errors.notes }}</p>
-                        </div>
+                        <Textarea
+                            v-model="form.notes"
+                            :rows="4"
+                            placeholder="Additional notes, phased completion dates, or any other relevant information..."
+                            :error="form.errors.notes"
+                        />
                     </Card>
 
                     <!-- Submit -->
@@ -210,6 +207,7 @@ import Input from '@/Components/UI/Input.vue';
 import Button from '@/Components/UI/Button.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import Select from '@/Components/UI/Select.vue';
+import Textarea from '@/Components/UI/Textarea.vue';
 import { useReportUpload } from '@/Composables/useReportUpload';
 
 const props = defineProps({
