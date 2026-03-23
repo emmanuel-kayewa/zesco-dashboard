@@ -1,5 +1,5 @@
 <template>
-    <div class=" relative" ref="target">
+    <div class="relative" ref="target">
         <!-- LABEL -->
         <label v-if="label" :for="id" class="block mb-1.5 text-sm font-medium text-zinc-700 dark:text-gray-300">
             {{ label }}
@@ -10,6 +10,7 @@
         <button
             type="button"
             :id="id"
+            ref="triggerEl"
             @click="toggle"
             :disabled="disabled"
             :class="selectClasses"
@@ -37,63 +38,68 @@
             </span>
         </button>
 
-        <!-- DROPDOWN -->
-        <transition
-            enter-active-class="transition ease-out duration-100"
-            enter-from-class="transform opacity-0 scale-95"
-            enter-to-class="transform opacity-100 scale-100"
-            leave-active-class="transition ease-in duration-75"
-            leave-from-class="transform opacity-100 scale-100"
-            leave-to-class="transform opacity-0 scale-95"
-        >
-            <div 
-                v-show="isOpen"
-                class="absolute z-50 mt-2 w-full bg-white dark:bg-gray-800 border border-zinc-200 dark:border-gray-700 rounded-lg shadow-lg py-1 max-h-60 overflow-y-auto focus:outline-none"
-                role="listbox"
+        <!-- DROPDOWN (Teleported to body to escape overflow containers) -->
+        <Teleport to="body">
+            <transition
+                enter-active-class="transition ease-out duration-100"
+                enter-from-class="transform opacity-0 scale-95"
+                enter-to-class="transform opacity-100 scale-100"
+                leave-active-class="transition ease-in duration-75"
+                leave-from-class="transform opacity-100 scale-100"
+                leave-to-class="transform opacity-0 scale-95"
             >
-                <!-- Placeholder/Clear Option -->
                 <div 
-                    v-if="placeholder"
-                    @click="choose('')"
-                    class="relative flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-zinc-100 dark:hover:bg-gray-700 text-sm italic text-zinc-400 dark:text-gray-500"
+                    v-show="isOpen"
+                    ref="dropdownEl"
+                    :style="dropdownStyle"
+                    class="fixed z-[9999] bg-white dark:bg-gray-800 border border-zinc-200 dark:border-gray-700 rounded-lg shadow-lg py-1 max-h-60 overflow-y-auto focus:outline-none"
+                    role="listbox"
+                    @mousedown.prevent
                 >
-                    <span class="w-4 h-4"></span>
-                    <span>{{ placeholder }}</span>
-                </div>
-
-                <!-- Options List -->
-                <div 
-                    v-for="option in options" 
-                    :key="getOptionValue(option)"
-                    @click="choose(getOptionValue(option))"
-                    class="relative flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-zinc-100 dark:hover:bg-gray-700 text-sm"
-                    :class="[
-                        getOptionValue(option) == modelValue ? 'bg-zinc-50 dark:bg-gray-700' : '',
-                        option.disabled ? 'opacity-50 cursor-not-allowed' : ''
-                    ]"
-                >
-                    <!-- Checkmark -->
-                    <span class="flex items-center justify-center w-4 h-4">
-                        <svg 
-                            v-if="getOptionValue(option) == modelValue"
-                            class="w-4 h-4 text-zinc-600 dark:text-zinc-400" 
-                            fill="none" 
-                            viewBox="0 0 24 24" 
-                            stroke="currentColor"
-                        >
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </span>
-
-                    <span 
-                        class="block truncate"
-                        :class="getOptionValue(option) == modelValue ? 'font-medium text-zinc-900 dark:text-white' : 'text-zinc-700 dark:text-gray-300'"
+                    <!-- Placeholder/Clear Option -->
+                    <div 
+                        v-if="placeholder"
+                        @click="choose('')"
+                        class="relative flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-zinc-100 dark:hover:bg-gray-700 text-sm italic text-zinc-400 dark:text-gray-500"
                     >
-                        {{ getOptionLabel(option) }}
-                    </span>
+                        <span class="w-4 h-4"></span>
+                        <span>{{ placeholder }}</span>
+                    </div>
+
+                    <!-- Options List -->
+                    <div 
+                        v-for="option in options" 
+                        :key="getOptionValue(option)"
+                        @click="choose(getOptionValue(option))"
+                        class="relative flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-zinc-100 dark:hover:bg-gray-700 text-sm"
+                        :class="[
+                            getOptionValue(option) == modelValue ? 'bg-zinc-50 dark:bg-gray-700' : '',
+                            option.disabled ? 'opacity-50 cursor-not-allowed' : ''
+                        ]"
+                    >
+                        <!-- Checkmark -->
+                        <span class="flex items-center justify-center w-4 h-4">
+                            <svg 
+                                v-if="getOptionValue(option) == modelValue"
+                                class="w-4 h-4 text-zinc-600 dark:text-zinc-400" 
+                                fill="none" 
+                                viewBox="0 0 24 24" 
+                                stroke="currentColor"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </span>
+
+                        <span 
+                            class="block truncate"
+                            :class="getOptionValue(option) == modelValue ? 'font-medium text-zinc-900 dark:text-white' : 'text-zinc-700 dark:text-gray-300'"
+                        >
+                            {{ getOptionLabel(option) }}
+                        </span>
+                    </div>
                 </div>
-            </div>
-        </transition>
+            </transition>
+        </Teleport>
 
         <!-- MESSAGES -->
         <div v-if="helpText && !error" class="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -106,7 +112,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, watch, nextTick, onBeforeUnmount } from 'vue';
 import { onClickOutside } from '@vueuse/core';
 
 const props = defineProps({
@@ -166,9 +172,44 @@ const emit = defineEmits(['update:modelValue', 'blur', 'focus']);
 
 const isOpen = ref(false);
 const target = ref(null);
+const triggerEl = ref(null);
+const dropdownEl = ref(null);
+const dropdownStyle = ref({});
 
-onClickOutside(target, () => {
+// Close when clicking outside both the trigger and the teleported dropdown
+onClickOutside(target, (event) => {
+    if (dropdownEl.value && dropdownEl.value.contains(event.target)) return;
     isOpen.value = false;
+});
+
+function updateDropdownPosition() {
+    if (!triggerEl.value) return;
+    const rect = triggerEl.value.getBoundingClientRect();
+    dropdownStyle.value = {
+        top: `${rect.bottom + 4}px`,
+        left: `${rect.left}px`,
+        width: `${rect.width}px`,
+    };
+}
+
+function onScroll(event) {
+    // Ignore scroll events from inside the dropdown itself (option list scrolling)
+    if (dropdownEl.value && dropdownEl.value.contains(event.target)) return;
+    // Reposition the dropdown to follow the trigger
+    updateDropdownPosition();
+}
+
+watch(isOpen, (open) => {
+    if (open) {
+        nextTick(() => updateDropdownPosition());
+        window.addEventListener('scroll', onScroll, true);
+    } else {
+        window.removeEventListener('scroll', onScroll, true);
+    }
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('scroll', onScroll, true);
 });
 
 const toggle = (event) => {
