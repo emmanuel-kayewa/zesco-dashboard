@@ -90,10 +90,12 @@
                     :error="form.errors.title"
                 />
 
-                <div class="w-full">
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Description</label>
-                    <textarea v-model="form.description" rows="3" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-gray-500 dark:focus:border-gray-500" placeholder="Describe what happened..."></textarea>
-                </div>
+                <Textarea
+                    v-model="form.description"
+                    label="Description"
+                    :rows="3"
+                    placeholder="Describe what happened..."
+                />
 
                 <div class="grid grid-cols-2 gap-3 items-start">
                     <Select
@@ -135,25 +137,33 @@
                 <Input v-model="form.affected_area" type="text" label="Affected Area" placeholder="e.g., Lusaka Province" size="md" />
                 <Input v-model="form.affected_customers" type="number" min="0" label="Affected Customers" placeholder="Number of customers affected" size="md" />
 
-                <div class="w-full">
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Root Cause</label>
-                    <textarea v-model="form.root_cause" rows="2" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-gray-500 dark:focus:border-gray-500" placeholder="Root cause analysis..."></textarea>
-                </div>
+                <Textarea
+                    v-model="form.root_cause"
+                    label="Root Cause"
+                    :rows="2"
+                    placeholder="Root cause analysis..."
+                />
 
-                <div class="w-full">
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Resolution</label>
-                    <textarea v-model="form.resolution" rows="2" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-gray-500 dark:focus:border-gray-500" placeholder="How was it resolved..."></textarea>
-                </div>
+                <Textarea
+                    v-model="form.resolution"
+                    label="Resolution"
+                    :rows="2"
+                    placeholder="How was it resolved..."
+                />
 
-                <div class="w-full">
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Lessons Learned</label>
-                    <textarea v-model="form.lessons_learned" rows="2" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-gray-500 dark:focus:border-gray-500" placeholder="Key takeaways..."></textarea>
-                </div>
+                <Textarea
+                    v-model="form.lessons_learned"
+                    label="Lessons Learned"
+                    :rows="2"
+                    placeholder="Key takeaways..."
+                />
 
-                <div class="w-full">
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Notes</label>
-                    <textarea v-model="form.notes" rows="2" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-gray-500 dark:focus:border-gray-500" placeholder="Additional notes..."></textarea>
-                </div>
+                <Textarea
+                    v-model="form.notes"
+                    label="Notes"
+                    :rows="2"
+                    placeholder="Additional notes..."
+                />
 
                 <div class="flex items-center gap-3 pt-2">
                     <Button type="submit" variant="primary" size="md" :disabled="form.processing" class="flex-1">
@@ -177,6 +187,7 @@ import Card from '@/Components/UI/Card.vue';
 import Input from '@/Components/UI/Input.vue';
 import Select from '@/Components/UI/Select.vue';
 import Button from '@/Components/UI/Button.vue';
+import Textarea from '@/Components/UI/Textarea.vue';
 import Modal from '@/Components/UI/Modal.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import { useBadges } from '@/Composables/useBadges';

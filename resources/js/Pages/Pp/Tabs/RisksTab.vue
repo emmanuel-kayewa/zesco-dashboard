@@ -75,20 +75,20 @@
             </div>
             <Select v-model="form.pp_project_id" :options="projectOptions" label="Project (optional)" :error="form.errors.pp_project_id" />
             <Input v-model="form.risk_category" label="Category" placeholder="e.g. Wayleave/Compensation" required :error="form.errors.risk_category" />
-            <div class="w-full">
-                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Risk Description</label>
-                <textarea v-model="form.risk_description" rows="3" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Describe the risk..." required></textarea>
-                <p v-if="form.errors.risk_description" class="text-red-500 text-xs mt-1">{{ form.errors.risk_description }}</p>
-            </div>
+            <Textarea
+                v-model="form.risk_description"
+                label="Risk Description"
+                :rows="3"
+                required
+                placeholder="Describe the risk..."
+                :error="form.errors.risk_description"
+            />
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <Input v-model="form.likelihood" type="number" min="1" max="5" step="1" label="Likelihood (1-5)" required :error="form.errors.likelihood" />
                 <Input v-model="form.impact" type="number" min="1" max="5" step="1" label="Impact (1-5)" required :error="form.errors.impact" />
                 <Select v-model="form.risk_level" :options="ragOptions" label="Risk Level" required :error="form.errors.risk_level" />
             </div>
-            <div class="w-full">
-                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Mitigation</label>
-                <textarea v-model="form.mitigation" rows="2" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Mitigation plan..."></textarea>
-            </div>
+            <Textarea v-model="form.mitigation" label="Mitigation" :rows="2" placeholder="Mitigation plan..." />
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <Input v-model="form.owner" label="Owner" :error="form.errors.owner" />
                 <Input v-model="form.due_date" type="date" label="Due Date" :error="form.errors.due_date" />
@@ -118,6 +118,7 @@ import Card from '@/Components/UI/Card.vue';
 import Input from '@/Components/UI/Input.vue';
 import Select from '@/Components/UI/Select.vue';
 import Button from '@/Components/UI/Button.vue';
+import Textarea from '@/Components/UI/Textarea.vue';
 import Modal from '@/Components/UI/Modal.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import PpImportModal from '@/Components/PpImportModal.vue';

@@ -89,28 +89,31 @@
                 </div>
 
                 <div class="border-t border-gray-200 dark:border-gray-700 p-3 sm:p-4">
-                    <form class="relative" @submit.prevent="submit">
-                        <textarea
+                    <form @submit.prevent="submit">
+                        <Textarea
                             v-model="input"
-                            rows="2"
-                            class="w-full resize-none rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white px-3 py-2 pr-12 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
+                            :rows="2"
+                            resize="none"
                             placeholder="Ask AI about this PP view..."
                             :disabled="loading"
+                            class="pr-12"
                             @keydown.enter.exact.prevent="submit"
                             @keydown.enter.shift.stop
-                        ></textarea>
-
-                        <button
-                            v-if="input.trim().length > 0"
-                            type="submit"
-                            class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center transition disabled:opacity-50 disabled:cursor-not-allowed bg-gray-900 hover:bg-black text-white dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900"
-                            :disabled="loading"
-                            title="Send"
                         >
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m0 0l-7 7m7-7l7 7" />
-                            </svg>
-                        </button>
+                            <template #suffix>
+                                <button
+                                    v-if="input.trim().length > 0"
+                                    type="submit"
+                                    class="w-9 h-9 rounded-full flex items-center justify-center transition disabled:opacity-50 disabled:cursor-not-allowed bg-gray-900 hover:bg-black text-white dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900"
+                                    :disabled="loading"
+                                    title="Send"
+                                >
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m0 0l-7 7m7-7l7 7" />
+                                    </svg>
+                                </button>
+                            </template>
+                        </Textarea>
                     </form>
                     <div class="mt-2 flex items-center justify-between">
                         <button
@@ -133,6 +136,7 @@
 import { computed, ref, watch } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { useAiTasks } from '@/Composables/useAiTasks';
+import Textarea from '@/Components/UI/Textarea.vue';
 
 const props = defineProps({
     open: { type: Boolean, default: false },

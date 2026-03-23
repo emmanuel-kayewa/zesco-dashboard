@@ -65,10 +65,7 @@
                 <Input v-model="form.transformers_energised" type="number" min="0" label="Transformers Energised" :error="form.errors.transformers_energised" />
                 <Input v-model="form.jobs_pending_connection" type="number" min="0" label="Jobs Pending" :error="form.errors.jobs_pending_connection" />
             </div>
-            <div class="w-full">
-                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Notes</label>
-                <textarea v-model="form.notes" rows="2" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Optional notes..."></textarea>
-            </div>
+            <Textarea v-model="form.notes" label="Notes" :rows="2" placeholder="Optional notes..." />
             <div class="flex items-center gap-3 pt-2">
                 <Button type="submit" variant="primary" size="md" :disabled="form.processing" class="flex-1">
                     {{ form.processing ? 'Saving...' : (editingId ? 'Update' : 'Create') }}
@@ -88,6 +85,7 @@ import { Link, useForm, router } from '@inertiajs/vue3';
 import Card from '@/Components/UI/Card.vue';
 import Input from '@/Components/UI/Input.vue';
 import Button from '@/Components/UI/Button.vue';
+import Textarea from '@/Components/UI/Textarea.vue';
 import Modal from '@/Components/UI/Modal.vue';
 import PpImportModal from '@/Components/PpImportModal.vue';
 

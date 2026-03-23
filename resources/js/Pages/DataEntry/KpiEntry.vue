@@ -116,15 +116,12 @@
                     :error="form.errors.period_date"
                 />
 
-                <div class="w-full">
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Notes</label>
-                    <textarea
-                        v-model="form.notes"
-                        rows="3"
-                        class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-[var(--palette-accent)] focus:border-[var(--palette-accent)] dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-[var(--palette-accent)] dark:focus:border-[var(--palette-accent)]"
-                        placeholder="Optional notes..."
-                    ></textarea>
-                </div>
+                <Textarea
+                    v-model="form.notes"
+                    label="Notes"
+                    :rows="3"
+                    placeholder="Optional notes..."
+                />
 
                 <div class="flex items-center gap-3 pt-2">
                     <Button type="submit" variant="primary" size="md" :disabled="form.processing" class="flex-1">
@@ -148,6 +145,7 @@ import Card from '@/Components/UI/Card.vue';
 import Input from '@/Components/UI/Input.vue';
 import Select from '@/Components/UI/Select.vue';
 import Button from '@/Components/UI/Button.vue';
+import Textarea from '@/Components/UI/Textarea.vue';
 import Modal from '@/Components/UI/Modal.vue';
 
 const props = defineProps({

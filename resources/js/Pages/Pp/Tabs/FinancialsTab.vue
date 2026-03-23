@@ -82,10 +82,7 @@
                 <Input v-model="form.committed_amount" type="number" step="0.01" min="0" label="Committed Amount" :error="form.errors.committed_amount" />
                 <Input v-model="form.paid_to_date" type="number" step="0.01" min="0" label="Paid-to-Date" :error="form.errors.paid_to_date" />
             </div>
-            <div class="w-full">
-                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Notes</label>
-                <textarea v-model="form.notes" rows="2" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Optional notes..."></textarea>
-            </div>
+            <Textarea v-model="form.notes" label="Notes" :rows="2" placeholder="Optional notes..." />
             <div class="flex items-center gap-3 pt-2">
                 <Button type="submit" variant="primary" size="md" :disabled="form.processing" class="flex-1">
                     {{ form.processing ? 'Saving...' : (editingId ? 'Update' : 'Create') }}
@@ -106,6 +103,7 @@ import Card from '@/Components/UI/Card.vue';
 import Input from '@/Components/UI/Input.vue';
 import Select from '@/Components/UI/Select.vue';
 import Button from '@/Components/UI/Button.vue';
+import Textarea from '@/Components/UI/Textarea.vue';
 import Modal from '@/Components/UI/Modal.vue';
 import PpImportModal from '@/Components/PpImportModal.vue';
 

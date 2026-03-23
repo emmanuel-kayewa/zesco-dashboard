@@ -68,10 +68,12 @@
                     :error="form.errors.name"
                 />
 
-                <div class="w-full">
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Description</label>
-                    <textarea v-model="form.description" rows="2" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-gray-500 dark:focus:border-gray-500" placeholder="Brief description..."></textarea>
-                </div>
+                <Textarea
+                    v-model="form.description"
+                    label="Description"
+                    :rows="2"
+                    placeholder="Brief description..."
+                />
 
                 <div class="grid grid-cols-2 gap-3 items-start">
                     <Select
@@ -131,6 +133,7 @@ import Card from '@/Components/UI/Card.vue';
 import Input from '@/Components/UI/Input.vue';
 import Select from '@/Components/UI/Select.vue';
 import Button from '@/Components/UI/Button.vue';
+import Textarea from '@/Components/UI/Textarea.vue';
 import Modal from '@/Components/UI/Modal.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import { formatCurrency } from '@/Composables/useFormatters';

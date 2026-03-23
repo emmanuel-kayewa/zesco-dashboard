@@ -245,14 +245,8 @@
             <!-- Notes -->
             <div v-show="activeFormTab === 'notes'">
                 <div class="space-y-3">
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Key Issue Summary</label>
-                        <textarea v-model="form.key_issue_summary" rows="3" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Key issues or notes..."></textarea>
-                    </div>
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Next Key Decision</label>
-                        <textarea v-model="form.next_decision" rows="2" class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Next key decision or milestone..."></textarea>
-                    </div>
+                    <Textarea v-model="form.key_issue_summary" label="Key Issue Summary" :rows="3" placeholder="Key issues or notes..." />
+                    <Textarea v-model="form.next_decision" label="Next Key Decision" :rows="2" placeholder="Next key decision or milestone..." />
                 </div>
             </div>
 
@@ -276,6 +270,7 @@ import Card from '@/Components/UI/Card.vue';
 import Input from '@/Components/UI/Input.vue';
 import Select from '@/Components/UI/Select.vue';
 import Button from '@/Components/UI/Button.vue';
+import Textarea from '@/Components/UI/Textarea.vue';
 import Modal from '@/Components/UI/Modal.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import PpImportModal from '@/Components/PpImportModal.vue';
