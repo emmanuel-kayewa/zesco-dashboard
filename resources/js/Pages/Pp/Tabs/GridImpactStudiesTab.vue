@@ -1,5 +1,5 @@
 <template>
-    <Card title="Grid Impact Studies">
+    <Card title="Grid Impact Studies" :hide-title-on-mobile="true">
         <template #actions>
             <div class="flex items-center gap-2">
                 <Button variant="secondary" size="sm" @click="showImport = true">

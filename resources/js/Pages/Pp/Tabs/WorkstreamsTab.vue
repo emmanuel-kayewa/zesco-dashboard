@@ -1,5 +1,5 @@
 <template>
-    <Card title="Workstreams">
+    <Card title="Workstreams" :hide-title-on-mobile="true">
         <template #actions>
             <div class="flex items-center gap-2">
                 <Button variant="secondary" size="sm" @click="showImport = true">

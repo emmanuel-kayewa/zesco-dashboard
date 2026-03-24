@@ -1,5 +1,5 @@
 <template>
-    <Card title="Financials">
+    <Card title="Financials" :hide-title-on-mobile="true">
         <template #actions>
             <div class="flex flex-wrap items-center gap-2">
                 <Select
@@ -10,13 +10,16 @@
                     ]"
                     placeholder="All Currencies"
                     size="md"
-                    class="w-28 sm:w-32"
+                    class="w-20 sm:w-32"
                 />
                 <Button variant="secondary" size="sm" @click="showImport = true">
                     <svg class="w-4 h-4 mr-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                     Import
                 </Button>
-                <Button variant="primary" size="md" @click="openModal()">+ New Record</Button>
+                <Button variant="primary" size="sm" @click="openModal()">
+                    <span class="hidden md:block">+ New Record</span>
+                    <span class="block md:hidden">+ New</span>
+                </Button>
             </div>
         </template>
 
