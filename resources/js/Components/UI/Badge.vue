@@ -61,7 +61,7 @@ const paletteDotStyle = computed(() => {
 });
 
 const badgeClasses = computed(() => {
-    const base = 'inline-flex items-center rounded-md px-2 py-1 text-xs font-medium';
+    const base = 'inline-flex items-center rounded-md px-2 py-1 text-xs font-medium text-nowrap';
     
     if (props.variant === 'filled') {
         return [base, isPalette.value ? 'ring-1 ring-inset' : filledColorClasses.value];
