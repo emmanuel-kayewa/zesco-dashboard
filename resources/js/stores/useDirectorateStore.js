@@ -5,6 +5,17 @@ export const useDirectorateStore = defineStore('directorate', () => {
     const activeDirectorate = ref(null);
     const sidebarFilters = ref({ from: '', to: '', category: '' });
 
+    // PP Explorer filter state (shared between Explorer page and DirectorateSidebar)
+    const explorerFilterState = ref({
+        appliedFilters: {},
+        filterOptions: {},
+        dimensionLabels: {},
+        active: false,
+    });
+
+    // PP Explorer view mode (shared between Explorer page and DirectorateSidebar)
+    const explorerViewMode = ref('classic');
+
     // Restore from sessionStorage on init
     try {
         const stored = sessionStorage.getItem('activeDirectorate');
@@ -40,12 +51,39 @@ export const useDirectorateStore = defineStore('directorate', () => {
         }
     }
 
+    function setExplorerViewMode(mode) {
+        explorerViewMode.value = mode;
+    }
+
+    function setExplorerFilters(data) {
+        explorerFilterState.value = {
+            appliedFilters: data.appliedFilters || {},
+            filterOptions: data.filterOptions || {},
+            dimensionLabels: data.dimensionLabels || {},
+            active: true,
+        };
+    }
+
+    function clearExplorerFilters() {
+        explorerFilterState.value = {
+            appliedFilters: {},
+            filterOptions: {},
+            dimensionLabels: {},
+            active: false,
+        };
+    }
+
     return {
         activeDirectorate,
         sidebarFilters,
+        explorerFilterState,
+        explorerViewMode,
         enterDirectorate,
         exitDirectorate,
         updateFilters,
         updateSummary,
+        setExplorerViewMode,
+        setExplorerFilters,
+        clearExplorerFilters,
     };
 });
