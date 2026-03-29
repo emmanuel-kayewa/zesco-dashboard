@@ -30,57 +30,28 @@
             </PageHeader>
         </template>
 
-        <!-- Active Filter Chips -->
-        <div class="flex flex-wrap items-center gap-2 mb-6">
+        <!-- Active Filter Chips (hidden on lg+ where sidebar shows them) -->
+        <div class="lg:hidden flex flex-wrap items-center gap-2 mb-4">
             <span class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Filters:</span>
 
             <template v-if="hasFilters">
                 <span v-for="(val, dim) in explorerData.appliedFilters" :key="dim"
-                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-zesco-100 text-zesco-700 dark:bg-zesco-900/30 dark:text-zesco-400">
-                    <span class="text-[10px] uppercase text-zesco-500 dark:text-zesco-500">{{ dimensionLabels[dim] || dim }}:</span>
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
+                      :style="filterChipStyle">
+                    <span class="text-[10px] uppercase opacity-70">{{ dimensionLabels[dim] || dim }}:</span>
                     {{ val }}
                     <button @click="removeFilter(dim)" class="ml-0.5 hover:text-red-600 transition-colors" title="Remove filter">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </span>
-                <button @click="clearAllFilters" class="text-xs text-red-500 hover:text-red-700 font-medium ml-2">
+                <button @click="clearAllFilters" class="text-xs text-red-500 hover:text-red-700 font-medium ml-1">
                     Clear All
                 </button>
             </template>
-            <span v-else class="text-xs text-gray-400 italic">No filters applied — showing all projects</span>
+            <span v-else class="text-xs text-gray-400 italic">No filters applied</span>
 
-            <!-- Add filter dropdowns for un-applied dimensions -->
-            <div class="ml-auto flex items-center gap-3 no-print">
-                <!-- View Mode Toggle -->
-                <div class="hidden lg:flex items-center gap-1 bg-gray-100 dark:bg-gray-700/50 rounded-lg p-1">
-                    <button
-                        @click="viewMode = 'classic'"
-                        :class="[
-                            'px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 flex items-center gap-1.5',
-                            viewMode === 'classic'
-                                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                        ]"
-                        title="Classic View"
-                    >
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                        <span>Classic</span>
-                    </button>
-                    <button
-                        @click="viewMode = 'compact'"
-                        :class="[
-                            'px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 flex items-center gap-1.5',
-                            viewMode === 'compact'
-                                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                        ]"
-                        title="Compact View"
-                    >
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                        <span>Compact</span>
-                    </button>
-                </div>
-
+            <!-- Add filter (inline on small screens) -->
+            <div class="flex items-center gap-2 mt-1 w-full">
                 <Select
                     v-model="addFilterDim"
                     :options="availableDimensionsOptions"
@@ -94,8 +65,55 @@
                     :options="addFilterOptions"
                     placeholder="Select value…"
                     size="sm"
-                    class="w-48"
+                    class="flex-1 max-w-[200px]"
                 />
+            </div>
+        </div>
+
+        <!-- View mode toggle + filter summary (always visible) -->
+        <div class="flex items-center justify-between gap-3 mb-6 no-print">
+            <!-- Filter summary line (lg only, since chips are in sidebar) -->
+            <div class="hidden lg:flex items-center gap-2 min-w-0 flex-1">
+                <span class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide flex-shrink-0">Filters:</span>
+                <template v-if="hasFilters">
+                    <span v-for="(val, dim) in explorerData.appliedFilters" :key="dim"
+                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                          :style="filterChipStyle">
+                        <span class="text-[10px] uppercase opacity-70">{{ dimensionLabels[dim] || dim }}:</span>
+                        {{ val }}
+                    </span>
+                </template>
+                <span v-else class="text-xs text-gray-400 italic">No filters applied</span>
+            </div>
+
+            <!-- View Mode Toggle (small screens only; sidebar has it on lg) -->
+            <div class="flex lg:hidden items-center gap-1 bg-gray-100 dark:bg-gray-700/50 rounded-lg p-1 flex-shrink-0">
+                <button
+                    @click="viewMode = 'classic'"
+                    :class="[
+                        'px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 flex items-center gap-1.5',
+                        viewMode === 'classic'
+                            ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    ]"
+                    title="Classic View"
+                >
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                    <span>Classic</span>
+                </button>
+                <button
+                    @click="viewMode = 'compact'"
+                    :class="[
+                        'px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 flex items-center gap-1.5',
+                        viewMode === 'compact'
+                            ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    ]"
+                    title="Compact View"
+                >
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    <span>Compact</span>
+                </button>
             </div>
         </div>
 
@@ -110,15 +128,16 @@
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Click any chart element to add a filter</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                 <template v-for="(bd, dim) in explorerData.breakdowns" :key="dim">
                     <!-- Skip lifecycle_phase, energy_type, and already filtered dimensions in Classic View -->
-                    <Card v-if="dim !== 'lifecycle_phase' && dim !== 'energy_type' && !bd.isFiltered" :title="`Projects by ${bd.label}`">
+                    <ChartCard v-if="dim !== 'lifecycle_phase' && dim !== 'energy_type' && !bd.isFiltered" :title="`Projects by ${bd.label}`">
+                        <template #default="{ zoomedHeight }">
                         <!-- Use 3D pie for sector -->
                         <Pie3DChart
                             v-if="dim === 'sector'"
                             :data="bd.data.map(d => ({ name: d.name, value: d.value }))"
-                            height="300px"
+                            :height="zoomedHeight || '300px'"
                             :show-legend="false"
                             @chart-click="(p) => addDimensionFilter(dim, p.name)"
                         />
@@ -131,7 +150,7 @@
                             :metricLabel="bd.label"
                             :showToggle="true"
                             :showMetricToggle="true"
-                            height="300px"
+                            :height="zoomedHeight || '300px'"
                             @region-click="(name) => addDimensionFilter(dim, name)"
                         >
                             <BarChart
@@ -140,7 +159,7 @@
                                 yField="value"
                                 :seriesName="bd.label"
                                 :colors="pickCategorical(bd.data.length)"
-                                height="300px"
+                                :height="zoomedHeight || '300px'"
                                 :horizontal="bd.data.length > 5"
                                 @chart-click="(p) => addDimensionFilter(dim, p.name || extractBarLabel(p))"
                             />
@@ -154,23 +173,26 @@
                             yField="value"
                             :seriesName="bd.label"
                             :colors="pickCategorical(bd.data.length)"
-                            height="300px"
+                            :height="zoomedHeight || '300px'"
                             :horizontal="bd.data.length > 5"
                             @chart-click="(p) => addDimensionFilter(dim, p.name || extractBarLabel(p))"
                         />
-                    </Card>
+                        </template>
+                    </ChartCard>
                 </template>
                 <!-- ── Investment Chart (always shown if sectors vary) ── -->
                 <div v-if="explorerData.sectorInvestment.length > 1">
-                    <Card title="Investment by Sector — Committed vs Paid (USD)">
+                    <ChartCard title="Investment by Sector — Committed vs Paid (USD)">
+                        <template #default="{ zoomedHeight }">
                         <BarChart
                             :data="investmentBarData"
                             xField="label"
                             :multiSeries="investmentSeries"
-                            height="320px"
+                            :height="zoomedHeight || '320px'"
                             @chart-click="(p) => addDimensionFilter('sector', p.name)"
                         />
-                    </Card>
+                        </template>
+                    </ChartCard>
                 </div>
             </div>
         </template>
@@ -196,24 +218,28 @@
         </div> -->
 
             <!-- ── Risk Summary (if available) ── -->
-            <div v-if="explorerData.risksByCategory.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <Card title="Risks by Category">
+            <div v-if="explorerData.risksByCategory.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+            <ChartCard title="Risks by Category">
+                <template #default="{ zoomedHeight }">
                 <Pie3DChart
                     :data="riskCategoryData"
-                    height="280px"
+                    :height="zoomedHeight || '280px'"
                     :show-legend="false"
                 />
-            </Card>
-            <Card title="Risks by Level">
+                </template>
+            </ChartCard>
+            <ChartCard title="Risks by Status">
+                <template #default="{ zoomedHeight }">
                 <BarChart
-                    :data="riskLevelData"
+                    :data="riskStatusData"
                     xField="label"
                     yField="value"
                     seriesName="Risks"
-                    :colors="[RAG.green, RAG.amber, RAG.red]"
-                    height="280px"
+                    :colors="pickCategorical(riskStatusData.length)"
+                    :height="zoomedHeight || '280px'"
                 />
-            </Card>
+                </template>
+            </ChartCard>
             </div>
         </template>
 
@@ -228,11 +254,11 @@
                 </div>
 
                 <!-- 12-Column Grid Layout (3 cards per row, 4 cols each) -->
-                <div class="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-6 mb-8">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 lg:grid-cols-12 gap-6 mb-8">
                     <!-- Row 1: Projects, Geographic Distribution -->
                     
                     <!-- Projects Card (6 cols / 1/2 width) - Scrollable list -->
-                    <div class="col-span-1 md:col-span-6 lg:col-span-6">
+                    <div class="col-span-1 sm:col-span-2 md:col-span-6 lg:col-span-6">
                         <Card title="Projects" class="h-full">
                             <template #actions>
                                 <button
@@ -272,7 +298,7 @@
                     </div>
 
                     <!-- Province/District Tabbed Card (6 cols / 1/2 width) -->
-                    <div v-if="explorerData.breakdowns.province || explorerData.breakdowns.district" class="col-span-1 md:col-span-6 lg:col-span-6">
+                    <div v-if="explorerData.breakdowns.province || explorerData.breakdowns.district" class="col-span-1 sm:col-span-2 md:col-span-6 lg:col-span-6">
                         <TabCard
                             v-model="geographicActiveTab"
                             :tabs="geographicTabs"
@@ -349,199 +375,150 @@
 
                     <!-- Developer Chart (4 cols / 1/3 width) - Moved from Row 3 -->
                     <div v-if="explorerData.breakdowns.developer" class="col-span-1 md:col-span-6 lg:col-span-4">
-                        <Card :class="['h-full', explorerData.breakdowns.developer.isFiltered && 'ring-2 ring-zesco-400/50']">
+                        <ChartCard :class="['h-full', explorerData.breakdowns.developer.isFiltered && 'ring-2 ring-zesco-400/50']">
                             <template #title>
                                 <div class="flex items-center gap-2">
-                                    <span>Projects by {{ explorerData.breakdowns.developer.label }}</span>
+                                    <span><span class="hidden md:block">Projects by</span> {{ explorerData.breakdowns.developer.label }}</span>
                                     <span v-if="explorerData.breakdowns.developer.isFiltered" 
-                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zesco-100 text-zesco-700 dark:bg-zesco-900/30 dark:text-zesco-400">
+                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                          :style="filterChipStyle">
                                         {{ explorerData.breakdowns.developer.activeFilter }}
                                     </span>
                                 </div>
                             </template>
-                            <template #actions>
-                                <button
-                                    @click="expandedChart = { type: 'developer', title: `Projects by ${explorerData.breakdowns.developer.label}` }"
-                                    class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
-                                    title="Expand chart"
-                                >
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                                    </svg>
-                                </button>
-                            </template>
+                            <template #default="{ zoomedHeight }">
                             <Pie3DChart
                                 :data="explorerData.breakdowns.developer.data.map(d => ({ name: d.name, value: d.value }))"
-                                height="280px"
+                                :height="zoomedHeight || '280px'"
                                 :show-legend="false"
                                 @chart-click="(p) => addDimensionFilter('developer', p.name)"
                             />
-                        </Card>
+                            </template>
+                        </ChartCard>
                     </div>
 
                     <!-- Sub-Sector Chart (4 cols / 1/3 width) - Changed to Pie -->
                     <div v-if="explorerData.breakdowns.sub_sector" class="col-span-1 md:col-span-6 lg:col-span-4">
-                        <Card :class="['h-full', explorerData.breakdowns.sub_sector.isFiltered && 'ring-2 ring-zesco-400/50']">
+                        <ChartCard :class="['h-full', explorerData.breakdowns.sub_sector.isFiltered && 'ring-2 ring-zesco-400/50']">
                             <template #title>
                                 <div class="flex items-center gap-2">
                                     <span>Projects by {{ explorerData.breakdowns.sub_sector.label }}</span>
                                     <span v-if="explorerData.breakdowns.sub_sector.isFiltered" 
-                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zesco-100 text-zesco-700 dark:bg-zesco-900/30 dark:text-zesco-400">
+                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                          :style="filterChipStyle">
                                         {{ explorerData.breakdowns.sub_sector.activeFilter }}
                                     </span>
                                 </div>
                             </template>
-                            <template #actions>
-                                <button
-                                    @click="expandedChart = { type: 'sub_sector', title: `Projects by ${explorerData.breakdowns.sub_sector.label}` }"
-                                    class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
-                                    title="Expand chart"
-                                >
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                                    </svg>
-                                </button>
-                            </template>
+                            <template #default="{ zoomedHeight }">
                             <Pie3DChart
                                 :data="explorerData.breakdowns.sub_sector.data.map(d => ({ name: d.name, value: d.value }))"
-                                height="280px"
+                                :height="zoomedHeight || '280px'"
                                 :show-legend="false"
                                 @chart-click="(p) => addDimensionFilter('sub_sector', p.name)"
                             />
-                        </Card>
+                            </template>
+                        </ChartCard>
                     </div>
 
                     <!-- Programme Chart (4 cols / 1/3 width) - Horizontal bar for better labels -->
                     <div v-if="explorerData.breakdowns.programme" class="col-span-1 md:col-span-6 lg:col-span-4">
-                        <Card :class="['h-full', explorerData.breakdowns.programme.isFiltered && 'ring-2 ring-zesco-400/50']">
+                        <ChartCard :class="['h-full', explorerData.breakdowns.programme.isFiltered && 'ring-2 ring-zesco-400/50']">
                             <template #title>
                                 <div class="flex items-center gap-2">
                                     <span>Projects by {{ explorerData.breakdowns.programme.label }}</span>
                                     <span v-if="explorerData.breakdowns.programme.isFiltered" 
-                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zesco-100 text-zesco-700 dark:bg-zesco-900/30 dark:text-zesco-400">
+                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                          :style="filterChipStyle">
                                         {{ explorerData.breakdowns.programme.activeFilter }}
                                     </span>
                                 </div>
                             </template>
-                            <template #actions>
-                                <button
-                                    @click="expandedChart = { type: 'programme', title: `Projects by ${explorerData.breakdowns.programme.label}` }"
-                                    class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
-                                    title="Expand chart"
-                                >
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                                    </svg>
-                                </button>
-                            </template>
+                            <template #default="{ zoomedHeight }">
                             <BarChart
                                 :data="explorerData.breakdowns.programme.data.map(d => ({ label: d.name, value: d.value }))"
                                 xField="label"
                                 yField="value"
                                 :seriesName="explorerData.breakdowns.programme.label"
                                 :colors="pickCategorical(explorerData.breakdowns.programme.data.length)"
-                                height="280px"
+                                :height="zoomedHeight || '280px'"
                                 :horizontal="true"
                                 @chart-click="(p) => addDimensionFilter('programme', p.name || extractBarLabel(p))"
                             />
-                        </Card>
+                            </template>
+                        </ChartCard>
                     </div>
 
                     <!-- Row 3: Sector, Contractor, Status, Risk Analysis -->
 
                     <!-- Sector Chart (4 cols / 1/3 width) - Hide when filtered -->
                     <div v-if="explorerData.breakdowns.sector && !explorerData.breakdowns.sector.isFiltered" class="col-span-1 md:col-span-6 lg:col-span-4">
-                        <Card :title="`Projects by ${explorerData.breakdowns.sector.label}`" class="h-full">
-                            <template #actions>
-                                <button
-                                    @click="expandedChart = { type: 'sector', title: `Projects by ${explorerData.breakdowns.sector.label}` }"
-                                    class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
-                                    title="Expand chart"
-                                >
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                                    </svg>
-                                </button>
-                            </template>
+                        <ChartCard :title="`Projects by ${explorerData.breakdowns.sector.label}`" class="h-full">
+                            <template #default="{ zoomedHeight }">
                             <Pie3DChart
                                 :data="explorerData.breakdowns.sector.data.map(d => ({ name: d.name, value: d.value }))"
-                                height="280px"
+                                :height="zoomedHeight || '280px'"
                                 :show-legend="false"
                                 @chart-click="(p) => addDimensionFilter('sector', p.name)"
                             />
-                        </Card>
+                            </template>
+                        </ChartCard>
                     </div>
 
                     <!-- Contractor Chart (4 cols / 1/3 width) - Changed to Pie for better visualization -->
                     <div v-if="explorerData.breakdowns.contractor" class="col-span-1 md:col-span-6 lg:col-span-4">
-                        <Card :class="['h-full', explorerData.breakdowns.contractor.isFiltered && 'ring-2 ring-zesco-400/50']">
+                        <ChartCard :class="['h-full', explorerData.breakdowns.contractor.isFiltered && 'ring-2 ring-zesco-400/50']">
                             <template #title>
                                 <div class="flex items-center gap-2">
                                     <span>Projects by {{ explorerData.breakdowns.contractor.label }}</span>
                                     <span v-if="explorerData.breakdowns.contractor.isFiltered" 
-                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zesco-100 text-zesco-700 dark:bg-zesco-900/30 dark:text-zesco-400">
+                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                          :style="filterChipStyle">
                                         {{ explorerData.breakdowns.contractor.activeFilter }}
                                     </span>
                                 </div>
                             </template>
-                            <template #actions>
-                                <button
-                                    @click="expandedChart = { type: 'contractor', title: `Projects by ${explorerData.breakdowns.contractor.label}` }"
-                                    class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
-                                    title="Expand chart"
-                                >
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                                    </svg>
-                                </button>
-                            </template>
+                            <template #default="{ zoomedHeight }">
                             <Pie3DChart
                                 :data="explorerData.breakdowns.contractor.data.map(d => ({ name: d.name, value: d.value }))"
-                                height="280px"
+                                :height="zoomedHeight || '280px'"
                                 :show-legend="false"
                                 @chart-click="(p) => addDimensionFilter('contractor', p.name)"
                             />
-                        </Card>
+                            </template>
+                        </ChartCard>
                     </div>
 
                     <!-- Status Chart (4 cols / 1/3 width) - Bar chart for progression states -->
                     <div v-if="explorerData.breakdowns.status" class="col-span-1 md:col-span-6 lg:col-span-4">
-                        <Card :class="['h-full', explorerData.breakdowns.status.isFiltered && 'ring-2 ring-zesco-400/50']">
+                        <ChartCard :class="['h-full', explorerData.breakdowns.status.isFiltered && 'ring-2 ring-zesco-400/50']">
                             <template #title>
                                 <div class="flex items-center gap-2">
                                     <span>Projects by {{ explorerData.breakdowns.status.label }}</span>
                                     <span v-if="explorerData.breakdowns.status.isFiltered" 
-                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zesco-100 text-zesco-700 dark:bg-zesco-900/30 dark:text-zesco-400">
+                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                          :style="filterChipStyle">
                                         {{ explorerData.breakdowns.status.activeFilter }}
                                     </span>
                                 </div>
                             </template>
-                            <template #actions>
-                                <button
-                                    @click="expandedChart = { type: 'status', title: `Projects by ${explorerData.breakdowns.status.label}` }"
-                                    class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
-                                    title="Expand chart"
-                                >
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                                    </svg>
-                                </button>
-                            </template>
+                            <template #default="{ zoomedHeight }">
                             <BarChart
                                 :data="explorerData.breakdowns.status.data.map(d => ({ label: d.name, value: d.value }))"
                                 xField="label"
                                 yField="value"
                                 :seriesName="explorerData.breakdowns.status.label"
                                 :colors="pickCategorical(explorerData.breakdowns.status.data.length)"
-                                height="280px"
+                                :height="zoomedHeight || '280px'"
                                 :horizontal="explorerData.breakdowns.status.data.length > 3"
                                 @chart-click="(p) => addDimensionFilter('status', p.name || extractBarLabel(p))"
                             />
-                        </Card>
+                            </template>
+                        </ChartCard>
                     </div>
 
                     <!-- Risk Tabbed Card (4 cols / 1/3 width) - Moved from Row 2 -->
-                    <div v-if="explorerData.risksByCategory.length > 0" class="col-span-1 md:col-span-6 lg:col-span-4">
+                    <div v-if="explorerData.risksByCategory.length > 0" class="col-span-1 sm:col-span-2 md:col-span-6 lg:col-span-4">
                         <TabCard
                             title="Risk Analysis"
                             :tabs="riskTabs"
@@ -565,13 +542,13 @@
                                     :show-legend="false"
                                 />
                             </template>
-                            <template #tab-level>
+                            <template #tab-status>
                                 <BarChart
-                                    :data="riskLevelData"
+                                    :data="riskStatusData"
                                     xField="label"
                                     yField="value"
                                     seriesName="Risks"
-                                    :colors="[RAG.amber, RAG.green, RAG.red]"
+                                    :colors="pickCategorical(riskStatusData.length)"
                                     height="280px"
                                 />
                             </template>
@@ -579,16 +556,18 @@
                     </div>
 
                     <!-- ── Investment Chart (always shown if sectors vary) ── -->
-                    <div v-if="explorerData.sectorInvestment.length > 1" class="col-span-1 md:col-span-6 lg:col-span-8">
-                        <Card title="Investment by Sector — Committed vs Paid (USD)">
+                    <div v-if="explorerData.sectorInvestment.length > 1" class="col-span-1 sm:col-span-2 md:col-span-6 lg:col-span-8">
+                        <ChartCard title="Investment by Sector — Committed vs Paid (USD)">
+                            <template #default="{ zoomedHeight }">
                             <BarChart
                                 :data="investmentBarData"
                                 xField="label"
                                 :multiSeries="investmentSeries"
-                                height="320px"
+                                :height="zoomedHeight || '320px'"
                                 @chart-click="(p) => addDimensionFilter('sector', p.name)"
                             />
-                        </Card>
+                            </template>
+                        </ChartCard>
                     </div>
                 </div>
             </template>
@@ -800,13 +779,13 @@
                             height="600px"
                         />
                     </template>
-                    <template #tab-level>
+                    <template #tab-status>
                         <BarChart
-                            :data="riskLevelData"
+                            :data="riskStatusData"
                             xField="label"
                             yField="value"
                             seriesName="Risks"
-                            :colors="[RAG.green, RAG.amber, RAG.red]"
+                            :colors="pickCategorical(riskStatusData.length)"
                             height="600px"
                         />
                     </template>
@@ -874,11 +853,12 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, defineAsyncComponent, onMounted } from 'vue';
+import { ref, computed, watch, defineAsyncComponent, onMounted, onUnmounted } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import Card from '@/Components/UI/Card.vue';
+import ChartCard from '@/Components/UI/ChartCard.vue';
 import TabCard from '@/Components/UI/TabCard.vue';
 import ChartModal from '@/Components/UI/ChartModal.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
@@ -898,34 +878,62 @@ const ZambiaMapChart = defineAsyncComponent(() => import('@/Components/Charts/Za
 
 const { pickCategorical, twoTone } = useChartPalettes();
 
-// ── View Mode Management (Classic vs Compact) ──
-const viewMode = ref('classic');
-
-// Expanded chart modal state
-const expandedChart = ref(null);
-
-// Load view mode from localStorage on mount
-onMounted(() => {
-    const savedMode = localStorage.getItem('pp_explorer_view_mode');
-    if (savedMode === 'compact' || savedMode === 'classic') {
-        viewMode.value = savedMode;
-    }
-    // Auto-enter directorate mode if not already active (e.g. direct URL navigation)
-    if (!directorateStore.activeDirectorate) {
-        directorateStore.enterDirectorate(props.directorate);
-    }
-});
-
-// Save view mode to localStorage when changed
-watch(viewMode, (newMode) => {
-    localStorage.setItem('pp_explorer_view_mode', newMode);
-});
-
 const props = defineProps({
     explorerData: { type: Object, required: true },
     directorate: { type: Object, required: true },
     directorates: { type: Array, default: () => [] },
     dimensionLabels: { type: Object, default: () => ({}) },
+});
+
+// ── View Mode Management (Classic vs Compact) ──
+const viewMode = computed({
+    get: () => directorateStore.explorerViewMode,
+    set: (val) => directorateStore.setExplorerViewMode(val),
+});
+
+// Expanded chart modal state
+const expandedChart = ref(null);
+
+// Palette-based filter chip style
+const filterChipStyle = computed(() => ({
+    backgroundColor: 'var(--palette-accent-lighter)',
+    color: 'var(--palette-accent-dark)',
+}));
+
+// Load view mode from localStorage on mount
+onMounted(() => {
+    const savedMode = localStorage.getItem('pp_explorer_view_mode');
+    if (savedMode === 'compact' || savedMode === 'classic') {
+        directorateStore.setExplorerViewMode(savedMode);
+    }
+    // Auto-enter directorate mode if not already active (e.g. direct URL navigation)
+    if (!directorateStore.activeDirectorate) {
+        directorateStore.enterDirectorate(props.directorate);
+    }
+    // Populate explorer filter state for sidebar
+    syncExplorerFiltersToStore();
+});
+
+onUnmounted(() => {
+    directorateStore.clearExplorerFilters();
+});
+
+function syncExplorerFiltersToStore() {
+    directorateStore.setExplorerFilters({
+        appliedFilters: props.explorerData.appliedFilters || {},
+        filterOptions: props.explorerData.filterOptions || {},
+        dimensionLabels: props.dimensionLabels || {},
+    });
+}
+
+// Keep store in sync when Inertia page data changes
+watch(() => props.explorerData, () => {
+    syncExplorerFiltersToStore();
+}, { deep: true });
+
+// Save view mode to localStorage when changed
+watch(viewMode, (newMode) => {
+    localStorage.setItem('pp_explorer_view_mode', newMode);
 });
 
 // Geographic tabs for compact view
@@ -957,7 +965,7 @@ watch(() => props.explorerData.appliedFilters?.province, (provinceFilter) => {
 // Risk tabs for compact view
 const riskTabs = [
     { key: 'category', label: 'By Category' },
-    { key: 'level', label: 'By Level' },
+    { key: 'status', label: 'By Status' },
 ];
 
 // Helper to get active geographic filter (province or district)
@@ -1131,6 +1139,13 @@ const riskLevelData = computed(() => {
         label: item.level,
         value: item.count,
         color: colorMap[item.level] || RAG.grey,
+    }));
+});
+
+const riskStatusData = computed(() => {
+    return (props.explorerData.risksByStatus || []).map(item => ({
+        label: item.status,
+        value: item.count,
     }));
 });
 
