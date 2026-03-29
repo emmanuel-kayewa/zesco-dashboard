@@ -1,16 +1,16 @@
 <template>
     <div>
         <ul v-if="projects.length > 0" role="list" class="divide-y divide-gray-100 dark:divide-white/5">
-            <li v-for="p in projects" :key="p.id" class="relative flex items-center space-x-4 py-4">
-                <div class="min-w-0 flex-auto">
+            <li v-for="p in projects" :key="p.id" class="relative flex items-center gap-x-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/20 px-3 rounded-md">
+                <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-x-3">
                         <div v-if="showRag && p.rag" class="flex-none rounded-full p-1" :class="ragPillClass(p.rag)">
                             <div class="size-2 rounded-full bg-current" />
                         </div>
 
-                        <h2 class="min-w-0 text-sm/6 font-semibold text-gray-900 dark:text-white">
-                            <button type="button" class="flex gap-x-2 text-left" @click="$emit('select', p.id)">
-                                <span class="truncate">{{ p.name || '—' }}</span>
+                        <h2 class="min-w-0 text-sm/6 font-semibold text-gray-900 dark:text-white flex-1">
+                            <button type="button" class="flex gap-x-2 text-left w-full" @click="$emit('select', p.id)">
+                                <span class="truncate pr-2">{{ p.name || '—' }}</span>
                                 <span class="absolute inset-0" />
                             </button>
                         </h2>
