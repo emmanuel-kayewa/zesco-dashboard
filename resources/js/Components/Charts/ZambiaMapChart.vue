@@ -77,7 +77,8 @@
       class="flex justify-center mb-2"
     >
       <span
-        class="text-xs font-medium text-zesco-700 dark:text-zesco-400 bg-zesco-50 dark:bg-zesco-900/30 px-2 py-0.5 rounded"
+        class="text-xs font-medium px-2 py-0.5 rounded"
+        :style="{ color: 'var(--palette-accent-dark)', backgroundColor: 'var(--palette-accent-lighter)' }"
       >
         {{ selectedProvince }} Province
       </span>
