@@ -428,7 +428,7 @@
               :tabs="geographicTabs"
               :class="[
                 'h-full',
-                activeGeographicFilter && 'ring-2 ring-zesco-400/50',
+                activeGeographicFilter && 'ring-2 ring-[var(--palette-accent-light)]/50',
               ]"
             >
               <template #title>
@@ -436,7 +436,8 @@
                   <span>Geographic Distribution</span>
                   <span
                     v-if="activeGeographicFilter"
-                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zesco-100 text-zesco-700 dark:bg-zesco-900/30 dark:text-zesco-400"
+                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                    :style="{ color: 'var(--palette-accent-dark)', backgroundColor: 'var(--palette-accent-lighter)' }"
                   >
                     {{ activeGeographicFilter.value }}
                   </span>
