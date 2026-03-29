@@ -24,7 +24,13 @@
         >
             <div
                 v-if="open"
-                class="absolute right-0 top-full mt-2 z-50 w-72 rounded-xl bg-white dark:bg-gray-800 shadow-lg ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden"
+                ref="popoverRef"
+                :class="[
+                    'top-full mt-2 z-50 rounded-xl bg-white dark:bg-gray-800 shadow-lg ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden',
+                    isMobile ? 'fixed' : 'absolute right-0',
+                    'w-72 max-w-[calc(100vw-2rem)]'
+                ]"
+                :style="popoverStyle"
             >
                 <!-- Header -->
                 <div class="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
@@ -79,13 +85,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { useChartPalettes } from '@/Composables/useChartPalettes';
 
 const { paletteKey, paletteOptions, setPalette, previewColors } = useChartPalettes();
 
 const open = ref(false);
 const containerRef = ref(null);
+const popoverRef = ref(null);
+const isMobile = ref(false);
+const popoverStyle = ref({});
 
 function selectPalette(key) {
     setPalette(key);
@@ -98,6 +107,49 @@ function onClickOutside(e) {
     }
 }
 
-onMounted(() => document.addEventListener('mousedown', onClickOutside));
-onBeforeUnmount(() => document.removeEventListener('mousedown', onClickOutside));
+function updatePopoverPosition() {
+    if (!open.value) return;
+
+    isMobile.value = window.matchMedia('(max-width: 639px)').matches;
+    if (!isMobile.value) {
+        popoverStyle.value = {};
+        return;
+    }
+
+    const anchorRect = containerRef.value?.getBoundingClientRect?.();
+    const popoverEl = popoverRef.value;
+    if (!anchorRect || !popoverEl) return;
+
+    const viewportW = window.innerWidth || 0;
+    const padding = 16; // 1rem
+    const width = Math.min(popoverEl.offsetWidth || 288, Math.max(0, viewportW - padding * 2));
+
+    // Align to the trigger's right edge (like desktop), but clamp to viewport.
+    let left = anchorRect.right - width;
+    left = Math.max(padding, Math.min(left, viewportW - padding - width));
+
+    const top = Math.round(anchorRect.bottom + 8);
+    popoverStyle.value = {
+        left: `${Math.round(left)}px`,
+        top: `${top}px`,
+    };
+}
+
+watch(open, async (val) => {
+    if (!val) return;
+    await nextTick();
+    updatePopoverPosition();
+});
+
+onMounted(() => {
+    document.addEventListener('mousedown', onClickOutside);
+    window.addEventListener('resize', updatePopoverPosition, { passive: true });
+    window.addEventListener('scroll', updatePopoverPosition, true);
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener('mousedown', onClickOutside);
+    window.removeEventListener('resize', updatePopoverPosition);
+    window.removeEventListener('scroll', updatePopoverPosition, true);
+});
 </script>
