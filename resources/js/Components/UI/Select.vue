@@ -185,11 +185,28 @@ onClickOutside(target, (event) => {
 function updateDropdownPosition() {
     if (!triggerEl.value) return;
     const rect = triggerEl.value.getBoundingClientRect();
-    dropdownStyle.value = {
-        top: `${rect.bottom + 4}px`,
-        left: `${rect.left}px`,
-        width: `${rect.width}px`,
-    };
+    const dropdownMaxH = 240;
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    const openAbove = spaceBelow < dropdownMaxH && spaceAbove > spaceBelow;
+
+    if (openAbove) {
+        dropdownStyle.value = {
+            bottom: `${window.innerHeight - rect.top + 4}px`,
+            left: `${rect.left}px`,
+            width: `${rect.width}px`,
+            top: 'auto',
+            maxHeight: `${Math.min(dropdownMaxH, spaceAbove)}px`,
+        };
+    } else {
+        dropdownStyle.value = {
+            top: `${rect.bottom + 4}px`,
+            left: `${rect.left}px`,
+            width: `${rect.width}px`,
+            bottom: 'auto',
+            maxHeight: `${Math.min(dropdownMaxH, spaceBelow)}px`,
+        };
+    }
 }
 
 function onScroll(event) {
