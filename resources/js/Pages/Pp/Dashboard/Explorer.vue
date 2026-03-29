@@ -222,6 +222,11 @@
                   :metricLabel="bd.label"
                   :showToggle="true"
                   :showMetricToggle="true"
+                  :selectedProvince="
+                    dim === 'district'
+                      ? explorerData.appliedFilters?.province || ''
+                      : ''
+                  "
                   :height="zoomedHeight || '300px'"
                   @region-click="(name) => addDimensionFilter(dim, name)"
                 >
@@ -521,6 +526,9 @@
                   :metricLabel="explorerData.breakdowns.district.label"
                   :showToggle="true"
                   :showMetricToggle="true"
+                  :selectedProvince="
+                    explorerData.appliedFilters?.province || ''
+                  "
                   height="280px"
                   @region-click="(name) => addDimensionFilter('district', name)"
                 >
@@ -572,7 +580,10 @@
             >
               <template #title>
                 <div class="flex items-center gap-2">
-                  <span>Projects by {{ explorerData.breakdowns.developer.label }}</span>
+                  <span
+                    >Projects by
+                    {{ explorerData.breakdowns.developer.label }}</span
+                  >
                   <span
                     v-if="explorerData.breakdowns.developer.isFiltered"
                     class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
@@ -612,7 +623,10 @@
             >
               <template #title>
                 <div class="flex items-center gap-2">
-                  <span>Projects by {{ explorerData.breakdowns.sub_sector.label }}</span>
+                  <span
+                    >Projects by
+                    {{ explorerData.breakdowns.sub_sector.label }}</span
+                  >
                   <span
                     v-if="explorerData.breakdowns.sub_sector.isFiltered"
                     class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
@@ -652,7 +666,10 @@
             >
               <template #title>
                 <div class="flex items-center gap-2">
-                  <span>Projects by {{ explorerData.breakdowns.programme.label }}</span>
+                  <span
+                    >Projects by
+                    {{ explorerData.breakdowns.programme.label }}</span
+                  >
                   <span
                     v-if="explorerData.breakdowns.programme.isFiltered"
                     class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
@@ -736,7 +753,10 @@
             >
               <template #title>
                 <div class="flex items-center gap-2">
-                  <span>Projects by {{ explorerData.breakdowns.contractor.label }}</span>
+                  <span
+                    >Projects by
+                    {{ explorerData.breakdowns.contractor.label }}</span
+                  >
                   <span
                     v-if="explorerData.breakdowns.contractor.isFiltered"
                     class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
@@ -776,7 +796,10 @@
             >
               <template #title>
                 <div class="flex items-center gap-2">
-                  <span>Projects by {{ explorerData.breakdowns.status.label }}</span>
+                  <span
+                    >Projects by
+                    {{ explorerData.breakdowns.status.label }}</span
+                  >
                   <span
                     v-if="explorerData.breakdowns.status.isFiltered"
                     class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
