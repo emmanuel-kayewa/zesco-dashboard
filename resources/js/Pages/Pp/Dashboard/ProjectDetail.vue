@@ -116,7 +116,7 @@
                             <p class="text-xl font-bold" :style="{ color: INVESTMENT.paid }">${{ fmtM(projectData.summary.totalPaid) }}</p>
                         </div>
                         <div>
-                            <p class="text-xs text-gray-400">Burn Rate</p>
+                            <p class="text-xs text-gray-400">Spend Rate</p> <!-- Burn Rate was previous name -->
                             <p class="text-xl font-bold" :style="{ color: (projectData.summary.burnRate ?? 0) >= 50 ? RAG.green : RAG.amber }">
                                 {{ projectData.summary.burnRate }}%
                             </p>
