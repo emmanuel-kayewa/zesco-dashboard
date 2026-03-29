@@ -53,7 +53,7 @@
             <template v-if="isPP">
                 <SidebarLink href="/pp/dashboard" icon="dashboard" :label="expanded ? 'Overview' : ''" :active="currentUrl === '/pp/dashboard'" />
                 <SidebarLink href="/pp/dashboard/explore" icon="chart" :label="expanded ? 'Portfolio Breakdown' : ''" :active="currentUrl.startsWith('/pp/dashboard/explore')" />
-                <SidebarLink href="/pp/dashboard/grid-studies" icon="map" :label="expanded ? 'Grid Studies' : ''" :active="currentUrl.startsWith('/pp/dashboard/grid-studies')" />
+                <!-- <SidebarLink href="/pp/dashboard/grid-studies" icon="map" :label="expanded ? 'Grid Studies' : ''" :active="currentUrl.startsWith('/pp/dashboard/grid-studies')" /> -->
                 <SidebarLink href="/pp/weekly-reports" icon="document" :label="expanded ? 'Weekly Reports' : ''" :active="currentUrl.startsWith('/pp/weekly-reports')" />
                 <SidebarLink href="/pp/projects" icon="folder" :label="expanded ? 'Data Management' : ''" :active="currentUrl.startsWith('/pp/projects') || currentUrl.startsWith('/pp/milestones') || currentUrl.startsWith('/pp/financials') || currentUrl.startsWith('/pp/risks')" />
             </template>
@@ -194,13 +194,89 @@
             </div>
         </div>
 
+        <!-- PP Explorer Filters (sidebar version, large screens only) -->
+        <div v-if="expanded && isPP && explorerState.active" class="flex-1 overflow-y-auto px-3 py-2">
+            <div class="mx-1 border-t border-gray-200 dark:border-gray-700 mb-3"></div>
+
+            <!-- View Mode Toggle -->
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2 px-1">View</p>
+            <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-700/50 rounded-lg p-1 mb-3">
+                <button
+                    @click="directorateStore.setExplorerViewMode('classic')"
+                    :class="[
+                        'flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 flex items-center justify-center gap-1.5',
+                        directorateStore.explorerViewMode === 'classic'
+                            ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    ]"
+                >
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                    <span>Classic</span>
+                </button>
+                <button
+                    @click="directorateStore.setExplorerViewMode('compact')"
+                    :class="[
+                        'flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 flex items-center justify-center gap-1.5',
+                        directorateStore.explorerViewMode === 'compact'
+                            ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    ]"
+                >
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    <span>Compact</span>
+                </button>
+            </div>
+
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2 px-1">Filters</p>
+
+            <!-- Active filter chips -->
+            <div class="space-y-1.5 mb-3">
+                <template v-if="hasExplorerFilters">
+                    <div v-for="(val, dim) in explorerState.appliedFilters" :key="dim"
+                         class="flex items-center justify-between px-2 py-1.5 rounded-lg border"
+                         :style="{ backgroundColor: 'var(--palette-accent-lighter)', borderColor: 'var(--palette-accent-light)' }">
+                        <div class="min-w-0">
+                            <p class="text-[10px] uppercase leading-none mb-0.5 opacity-60" :style="{ color: 'var(--palette-accent-dark)' }">{{ explorerState.dimensionLabels[dim] || dim }}</p>
+                            <p class="text-xs font-medium truncate" :style="{ color: 'var(--palette-accent-dark)' }">{{ val }}</p>
+                        </div>
+                        <button @click="removeExplorerFilter(dim)" class="p-0.5 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0" title="Remove">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <button @click="clearExplorerFilters" class="text-xs text-red-500 hover:text-red-700 font-medium px-1">
+                        Clear All
+                    </button>
+                </template>
+                <p v-else class="text-xs text-gray-400 italic px-1">No filters applied</p>
+            </div>
+
+            <!-- Add filter -->
+            <div class="space-y-2">
+                <Select
+                    v-model="sidebarAddFilterDim"
+                    :options="sidebarAvailableDimensions"
+                    placeholder="+ Add Filter"
+                    size="sm"
+                    class="w-full"
+                />
+                <Select
+                    v-if="sidebarAddFilterDim"
+                    v-model="sidebarAddFilterVal"
+                    :options="sidebarAddFilterOptions"
+                    placeholder="Select value…"
+                    size="sm"
+                    class="w-full"
+                />
+            </div>
+        </div>
+
         <!-- Fill remaining space when no filters -->
-        <div v-if="!expanded || !showFilters" class="flex-1"></div>
+        <div v-if="!expanded || (!showFilters && !(isPP && explorerState.active))" class="flex-1"></div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { useDirectorateStore } from '@/stores/useDirectorateStore';
 import SidebarLink from './SidebarLink.vue';
@@ -227,6 +303,56 @@ const localFilters = ref({
     to: directorateStore.sidebarFilters.to || '',
     category: directorateStore.sidebarFilters.category || '',
 });
+
+// PP Explorer filter state from store
+const explorerState = computed(() => directorateStore.explorerFilterState);
+const hasExplorerFilters = computed(() => Object.keys(explorerState.value.appliedFilters || {}).length > 0);
+
+const sidebarAddFilterDim = ref('');
+const sidebarAddFilterVal = ref('');
+
+const sidebarAvailableDimensions = computed(() => {
+    const applied = explorerState.value.appliedFilters || {};
+    const labels = explorerState.value.dimensionLabels || {};
+    const options = explorerState.value.filterOptions || {};
+    return Object.entries(labels)
+        .filter(([dim]) => !applied[dim] && (options[dim] || []).length > 0)
+        .map(([value, label]) => ({ value, label }));
+});
+
+const sidebarAddFilterOptions = computed(() => {
+    if (!sidebarAddFilterDim.value) return [];
+    return (explorerState.value.filterOptions?.[sidebarAddFilterDim.value] || []).map(opt => ({
+        value: opt,
+        label: opt,
+    }));
+});
+
+watch(sidebarAddFilterDim, () => { sidebarAddFilterVal.value = ''; });
+
+watch(sidebarAddFilterVal, (newVal) => {
+    if (newVal && sidebarAddFilterDim.value) {
+        const current = { ...(explorerState.value.appliedFilters || {}) };
+        current[sidebarAddFilterDim.value] = newVal;
+        sidebarAddFilterDim.value = '';
+        sidebarAddFilterVal.value = '';
+        router.get('/pp/dashboard/explore', current);
+    }
+});
+
+function removeExplorerFilter(dim) {
+    const current = { ...(explorerState.value.appliedFilters || {}) };
+    delete current[dim];
+    if (Object.keys(current).length === 0) {
+        router.get('/pp/dashboard/explore');
+    } else {
+        router.get('/pp/dashboard/explore', current);
+    }
+}
+
+function clearExplorerFilters() {
+    router.get('/pp/dashboard/explore');
+}
 
 function handleBack() {
     directorateStore.exitDirectorate();
