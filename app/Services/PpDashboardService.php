@@ -163,6 +163,10 @@ class PpDashboardService
             'level' => $lvl, 'count' => $g->count(),
         ])->values()->toArray();
 
+        $risksByStatus = $risks->groupBy('status')->map(fn ($g, $s) => [
+            'status' => $s ?: 'Unknown', 'count' => $g->count(),
+        ])->values()->toArray();
+
         return [
             'kpis'              => $this->buildKpis($filteredProjects, $safeguards),
             'breakdowns'        => $breakdowns,
@@ -170,6 +174,7 @@ class PpDashboardService
             'programmeOutputs'  => $programmeOutputs,
             'risksByCategory'   => $risksByCategory,
             'risksByLevel'      => $risksByLevel,
+            'risksByStatus'     => $risksByStatus,
             'projects'          => $this->buildProjectList($filteredProjects),
             'totalCount'        => $filteredProjects->count(),
             'appliedFilters'    => $filters,
