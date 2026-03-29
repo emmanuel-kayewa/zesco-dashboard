@@ -15,26 +15,26 @@
                 <thead>
                     <tr class="border-b border-gray-200 dark:border-gray-700">
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Code</th>
-                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Project</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Project</th>
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Workstream</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Planned %</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Actual %</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Variance</th>
-                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Status</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 text-nowrap uppercase">Planned %</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 text-nowrap uppercase">Actual %</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Variance</th>
+                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
                         <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="w in workstreams.data" :key="w.id" class="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/20">
                         <td class="py-2 px-3 font-mono text-xs text-gray-500">{{ w.workstream_code }}</td>
-                        <td class="py-2 px-3 text-gray-700 dark:text-gray-200 hidden sm:table-cell">{{ w.project?.project_code || '—' }}</td>
+                        <td class="py-2 px-3 text-gray-700 dark:text-gray-200">{{ w.project?.project_code || '—' }}</td>
                         <td class="py-2 px-3 font-medium text-gray-900 dark:text-white">{{ w.workstream }}</td>
-                        <td class="text-right py-2 px-3 text-gray-500 hidden md:table-cell">{{ w.planned_pct != null ? w.planned_pct + '%' : '—' }}</td>
+                        <td class="text-right py-2 px-3 text-gray-500">{{ w.planned_pct != null ? w.planned_pct + '%' : '—' }}</td>
                         <td class="text-right py-2 px-3 font-semibold text-gray-700 dark:text-gray-200">{{ w.actual_pct != null ? w.actual_pct + '%' : '—' }}</td>
-                        <td class="text-right py-2 px-3 hidden md:table-cell" :class="(w.variance_pct || 0) < 0 ? 'text-red-600' : 'text-green-600'">
+                        <td class="text-right py-2 px-3" :class="(w.variance_pct || 0) < 0 ? 'text-red-600' : 'text-green-600'">
                             {{ w.variance_pct != null ? w.variance_pct + '%' : '—' }}
                         </td>
-                        <td class="text-center py-2 px-3 hidden sm:table-cell">
+                        <td class="text-center py-2 px-3">
                             <Badge variant="dot" :color="getStatusColor(w.status)" :label="w.status || '—'" />
                         </td>
                         <td class="text-center py-2 px-3">

@@ -16,14 +16,14 @@
                     <tr class="border-b border-gray-200 dark:border-gray-700">
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Code</th>
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Scope</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">WL Recv</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase">WL Clrd</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">WL Pend</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Srv Recv</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Srv Clrd</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Srv Pend</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">PAPs</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Comp (ZMW)</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 text-nowrap uppercase">WL Recv</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 text-nowrap uppercase">WL Clrd</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 text-nowrap uppercase">WL Pend</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 text-nowrap uppercase">Srv Recv</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 text-nowrap uppercase">Srv Clrd</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 text-nowrap uppercase">Srv Pend</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase">PAPs</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Comp (ZMW)</th>
                         <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                     </tr>
                 </thead>
@@ -31,14 +31,14 @@
                     <tr v-for="s in safeguards.data" :key="s.id" class="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/20">
                         <td class="py-2 px-3 font-mono text-xs text-gray-500">{{ s.record_code }}</td>
                         <td class="py-2 px-3 font-medium text-gray-900 dark:text-white">{{ s.scope }}</td>
-                        <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200 hidden md:table-cell">{{ s.wayleave_received ?? '—' }}</td>
+                        <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200">{{ s.wayleave_received ?? '—' }}</td>
                         <td class="text-right py-2 px-3 text-green-600 dark:text-green-400 font-semibold">{{ s.wayleave_cleared ?? '—' }}</td>
-                        <td class="text-right py-2 px-3 text-amber-600 dark:text-amber-400 font-semibold hidden lg:table-cell">{{ s.wayleave_pending ?? '—' }}</td>
-                        <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200 hidden md:table-cell">{{ s.survey_received ?? '—' }}</td>
+                        <td class="text-right py-2 px-3 text-amber-600 dark:text-amber-400 font-semibold">{{ s.wayleave_pending ?? '—' }}</td>
+                        <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200">{{ s.survey_received ?? '—' }}</td>
                         <td class="text-right py-2 px-3 text-green-600 dark:text-green-400 font-semibold">{{ s.survey_cleared ?? '—' }}</td>
-                        <td class="text-right py-2 px-3 text-amber-600 dark:text-amber-400 font-semibold hidden lg:table-cell">{{ s.survey_pending ?? '—' }}</td>
-                        <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200 hidden sm:table-cell">{{ s.paps ?? '—' }}</td>
-                        <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200 font-semibold hidden sm:table-cell">{{ formatNum(s.comp_paid_zmw) }}</td>
+                        <td class="text-right py-2 px-3 text-amber-600 dark:text-amber-400 font-semibold">{{ s.survey_pending ?? '—' }}</td>
+                        <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200">{{ s.paps ?? '—' }}</td>
+                        <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200 font-semibold">{{ formatNum(s.comp_paid_zmw) }}</td>
                         <td class="text-center py-2 px-3">
                             <button @click="editEntry(s)" class="text-zesco-600 hover:text-zesco-800 text-xs mr-2">Edit</button>
                             <button @click="deleteEntry(s.id)" class="text-red-600 hover:text-red-800 text-xs">Delete</button>

@@ -15,36 +15,36 @@
                 <thead>
                     <tr class="border-b border-gray-200 dark:border-gray-700">
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Code</th>
-                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Type</th>
-                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Project</th>
-                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Category</th>
+                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Type</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Project</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Category</th>
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Description</th>
-                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">L</th>
-                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">I</th>
-                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">S</th>
+                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">L</th>
+                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">I</th>
+                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">S</th>
                         <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Level</th>
-                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Owner</th>
-                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Status</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Owner</th>
+                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
                         <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="r in risks.data" :key="r.id" class="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/20">
                         <td class="py-2 px-3 font-mono text-xs text-gray-500">{{ r.risk_code }}</td>
-                        <td class="text-center py-2 px-3 hidden sm:table-cell">
+                        <td class="text-center py-2 px-3">
                             <span class="text-xs px-1.5 py-0.5 rounded" :class="r.record_type === 'Issue' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'">{{ r.record_type || 'Risk' }}</span>
                         </td>
-                        <td class="py-2 px-3 text-gray-700 dark:text-gray-200 hidden sm:table-cell">{{ r.project?.project_code || '—' }}</td>
-                        <td class="py-2 px-3 text-gray-500 hidden md:table-cell">{{ r.risk_category }}</td>
+                        <td class="py-2 px-3 text-gray-700 dark:text-gray-200">{{ r.project?.project_code || '—' }}</td>
+                        <td class="py-2 px-3 text-gray-500">{{ r.risk_category }}</td>
                         <td class="py-2 px-3 text-gray-900 dark:text-white max-w-sm truncate" :title="r.risk_description">{{ r.risk_description }}</td>
-                        <td class="text-center py-2 px-3 hidden lg:table-cell">{{ r.likelihood }}</td>
-                        <td class="text-center py-2 px-3 hidden lg:table-cell">{{ r.impact }}</td>
-                        <td class="text-center py-2 px-3 font-bold hidden lg:table-cell">{{ r.severity }}</td>
+                        <td class="text-center py-2 px-3">{{ r.likelihood }}</td>
+                        <td class="text-center py-2 px-3">{{ r.impact }}</td>
+                        <td class="text-center py-2 px-3 font-bold">{{ r.severity }}</td>
                         <td class="text-center py-2 px-3">
                             <Badge variant="dot" :color="getRagColor(r.risk_level)" :label="r.risk_level" />
                         </td>
-                        <td class="py-2 px-3 text-gray-500 hidden md:table-cell">{{ r.owner || '—' }}</td>
-                        <td class="text-center py-2 px-3 hidden sm:table-cell">
+                        <td class="py-2 px-3 text-gray-500">{{ r.owner || '—' }}</td>
+                        <td class="text-center py-2 px-3">
                             <Badge variant="dot" :color="getRiskStatusColor(r.status)" :label="r.status" />
                         </td>
                         <td class="text-center py-2 px-3">

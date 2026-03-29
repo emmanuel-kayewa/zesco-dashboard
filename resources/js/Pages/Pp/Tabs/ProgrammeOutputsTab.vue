@@ -16,11 +16,11 @@
                     <tr class="border-b border-gray-200 dark:border-gray-700">
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Code</th>
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Programme</th>
-                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Period</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Period</th>
                         <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Connections</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Transformers</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Pending Jobs</th>
-                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Notes</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Transformers</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 text-nowrap uppercase">Pending Jobs</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Notes</th>
                         <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                     </tr>
                 </thead>
@@ -28,11 +28,11 @@
                     <tr v-for="o in programmeOutputs.data" :key="o.id" class="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/20">
                         <td class="py-2 px-3 font-mono text-xs text-gray-500">{{ o.output_code }}</td>
                         <td class="py-2 px-3 font-medium text-gray-900 dark:text-white">{{ o.programme }}</td>
-                        <td class="py-2 px-3 text-gray-500 hidden sm:table-cell">{{ o.period }}</td>
+                        <td class="py-2 px-3 text-gray-500">{{ o.period }}</td>
                         <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200 font-semibold">{{ formatInt(o.connections_delivered) }}</td>
-                        <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200 hidden md:table-cell">{{ formatInt(o.transformers_energised) }}</td>
-                        <td class="text-right py-2 px-3 text-amber-600 dark:text-amber-400 font-semibold hidden lg:table-cell">{{ formatInt(o.jobs_pending_connection) }}</td>
-                        <td class="py-2 px-3 text-gray-500 max-w-xs truncate hidden lg:table-cell">{{ o.notes || '—' }}</td>
+                        <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200">{{ formatInt(o.transformers_energised) }}</td>
+                        <td class="text-right py-2 px-3 text-amber-600 dark:text-amber-400 font-semibold">{{ formatInt(o.jobs_pending_connection) }}</td>
+                        <td class="py-2 px-3 text-gray-500 max-w-xs truncate">{{ o.notes || '—' }}</td>
                         <td class="text-center py-2 px-3">
                             <button @click="editEntry(o)" class="text-zesco-600 hover:text-zesco-800 text-xs mr-2">Edit</button>
                             <button @click="deleteEntry(o.id)" class="text-red-600 hover:text-red-800 text-xs">Delete</button>

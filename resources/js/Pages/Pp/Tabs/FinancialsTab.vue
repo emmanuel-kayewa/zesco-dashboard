@@ -29,11 +29,11 @@
                     <tr class="border-b border-gray-200 dark:border-gray-700">
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Code</th>
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Project</th>
-                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">As-Of Date</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">As-Of Date</th>
                         <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Committed</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Paid-to-Date</th>
-                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Currency</th>
-                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Notes</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 text-nowrap uppercase">Paid-to-Date</th>
+                        <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Currency</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Notes</th>
                         <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                     </tr>
                 </thead>
@@ -41,11 +41,11 @@
                     <tr v-for="f in financials.data" :key="f.id" class="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/20">
                         <td class="py-2 px-3 font-mono text-xs text-gray-500">{{ f.finance_code }}</td>
                         <td class="py-2 px-3 text-gray-700 dark:text-gray-200">{{ f.project ? `${f.project.project_code}` : '—' }}</td>
-                        <td class="py-2 px-3 text-gray-500 hidden sm:table-cell">{{ f.as_of_date }}</td>
+                        <td class="py-2 px-3 text-gray-500">{{ f.as_of_date }}</td>
                         <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200 font-semibold">{{ formatNum(f.committed_amount) }}</td>
-                        <td class="text-right py-2 px-3 text-green-600 dark:text-green-400 font-semibold hidden md:table-cell">{{ formatNum(f.paid_to_date) }}</td>
-                        <td class="text-center py-2 px-3 hidden lg:table-cell"><span class="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{{ f.currency }}</span></td>
-                        <td class="py-2 px-3 text-gray-500 max-w-xs truncate hidden lg:table-cell">{{ f.notes || '—' }}</td>
+                        <td class="text-right py-2 px-3 text-green-600 dark:text-green-400 font-semibold">{{ formatNum(f.paid_to_date) }}</td>
+                        <td class="text-center py-2 px-3"><span class="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{{ f.currency }}</span></td>
+                        <td class="py-2 px-3 text-gray-500 max-w-xs truncate">{{ f.notes || '—' }}</td>
                         <td class="text-center py-2 px-3">
                             <button @click="editEntry(f)" class="text-zesco-600 hover:text-zesco-800 text-xs mr-2">Edit</button>
                             <button @click="deleteEntry(f.id)" class="text-red-600 hover:text-red-800 text-xs">Delete</button>

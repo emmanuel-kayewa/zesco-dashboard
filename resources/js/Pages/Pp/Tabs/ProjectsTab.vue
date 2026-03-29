@@ -93,13 +93,13 @@
                     <tr class="border-b border-gray-200 dark:border-gray-700">
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Code</th>
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Name</th>
-                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Sector</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Sector</th>
                         <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Health</th>
-                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Stage</th>
-                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Phase</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Cost (USD)</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">MW</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Progress</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Stage</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Phase</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Cost (USD)</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase">MW</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Progress</th>
                         <th class="text-center py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                     </tr>
                 </thead>
@@ -107,16 +107,16 @@
                     <tr v-for="p in projects.data" :key="p.id" class="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/20">
                         <td class="py-2 px-3 font-mono text-xs text-gray-500">{{ p.project_code }}</td>
                         <td class="py-2 px-3 font-medium text-gray-900 dark:text-white max-w-xs truncate" :title="p.project_name">{{ p.project_name }}</td>
-                        <td class="py-2 px-3 text-gray-500 hidden sm:table-cell">{{ p.sector }}</td>
+                        <td class="py-2 px-3 text-gray-500">{{ p.sector }}</td>
                         <td class="py-2 px-3">
                             <Badge v-if="p.status" variant="dot" :color="getProjectStatusColor(p.status)" :label="p.status" />
                             <span v-else class="text-gray-400 text-xs">—</span>
                         </td>
-                        <td class="py-2 px-3 text-gray-500 hidden lg:table-cell">{{ p.project_stage || '—' }}</td>
-                        <td class="py-2 px-3 text-gray-500 hidden lg:table-cell">{{ p.lifecycle_phase || '—' }}</td>
-                        <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200 hidden md:table-cell">{{ formatUsd(p.cost_usd) }}</td>
-                        <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200 hidden lg:table-cell">{{ p.capacity_mw || '—' }}</td>
-                        <td class="text-right py-2 px-3 hidden md:table-cell">
+                        <td class="py-2 px-3 text-gray-500">{{ p.project_stage || '—' }}</td>
+                        <td class="py-2 px-3 text-gray-500">{{ p.lifecycle_phase || '—' }}</td>
+                        <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200">{{ formatUsd(p.cost_usd) }}</td>
+                        <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200">{{ p.capacity_mw || '—' }}</td>
+                        <td class="text-right py-2 px-3">
                             <span v-if="p.progress_pct !== null" class="font-semibold">{{ p.progress_pct }}%</span>
                             <span v-else class="text-gray-400">—</span>
                         </td>
