@@ -92,7 +92,7 @@
     <!-- View mode toggle + filter summary (always visible) -->
     <div class="flex items-center justify-between gap-3 mb-6 no-print">
       <!-- Filter summary line (lg only, since chips are in sidebar) -->
-      <div class="hidden lg:flex items-center gap-2 min-w-0 flex-1">
+      <div class="hidden lg:flex items-center gap-2 min-w-0 flex-1 overflow-x-auto scrollbar-hide">
         <span
           class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide flex-shrink-0"
           >Filters:</span
@@ -101,7 +101,7 @@
           <span
             v-for="(val, dim) in explorerData.appliedFilters"
             :key="dim"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs text-nowrap font-medium"
             :style="filterChipStyle"
           >
             <span class="text-[10px] uppercase opacity-70"
