@@ -121,8 +121,8 @@
                             <span v-else class="text-gray-400">—</span>
                         </td>
                         <td class="text-center py-2 px-3">
-                            <button @click="editEntry(p)" class="text-zesco-600 hover:text-zesco-800 text-xs mr-2">Edit</button>
-                            <button @click="deleteEntry(p.id)" class="text-red-600 hover:text-red-800 text-xs">Delete</button>
+                            <button @click="editEntry(p)" class="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white text-xs mr-2 transition-colors">Edit</button>
+                            <button @click="deleteEntry(p.id)" class="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 text-xs transition-colors">Delete</button>
                         </td>
                     </tr>
                     <tr v-if="!projects.data?.length">

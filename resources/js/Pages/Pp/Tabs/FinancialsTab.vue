@@ -47,8 +47,8 @@
                         <td class="text-center py-2 px-3"><span class="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{{ f.currency }}</span></td>
                         <td class="py-2 px-3 text-gray-500 max-w-xs truncate">{{ f.notes || '—' }}</td>
                         <td class="text-center py-2 px-3">
-                            <button @click="editEntry(f)" class="text-zesco-600 hover:text-zesco-800 text-xs mr-2">Edit</button>
-                            <button @click="deleteEntry(f.id)" class="text-red-600 hover:text-red-800 text-xs">Delete</button>
+                            <button @click="editEntry(f)" class="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white text-xs mr-2 transition-colors">Edit</button>
+                            <button @click="deleteEntry(f.id)" class="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 text-xs transition-colors">Delete</button>
                         </td>
                     </tr>
                     <tr v-if="!financials.data?.length">

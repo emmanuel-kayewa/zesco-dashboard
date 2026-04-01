@@ -34,8 +34,8 @@
                             <span v-if="project.start_date">{{ project.start_date }} — {{ project.end_date }}</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button @click="editEntry(project)" class="text-zesco-600 hover:text-zesco-800 text-xs">Edit</button>
-                            <button @click="deleteEntry(project.id)" class="text-red-600 hover:text-red-800 text-xs">Delete</button>
+                            <button @click="editEntry(project)" class="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white text-xs transition-colors">Edit</button>
+                            <button @click="deleteEntry(project.id)" class="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 text-xs transition-colors">Delete</button>
                         </div>
                     </div>
                 </div>

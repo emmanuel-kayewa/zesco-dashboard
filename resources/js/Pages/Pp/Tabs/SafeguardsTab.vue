@@ -40,8 +40,8 @@
                         <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200">{{ s.paps ?? '—' }}</td>
                         <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200 font-semibold">{{ formatNum(s.comp_paid_zmw) }}</td>
                         <td class="text-center py-2 px-3">
-                            <button @click="editEntry(s)" class="text-zesco-600 hover:text-zesco-800 text-xs mr-2">Edit</button>
-                            <button @click="deleteEntry(s.id)" class="text-red-600 hover:text-red-800 text-xs">Delete</button>
+                            <button @click="editEntry(s)" class="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white text-xs mr-2 transition-colors">Edit</button>
+                            <button @click="deleteEntry(s.id)" class="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 text-xs transition-colors">Delete</button>
                         </td>
                     </tr>
                     <tr v-if="!safeguards.data?.length">

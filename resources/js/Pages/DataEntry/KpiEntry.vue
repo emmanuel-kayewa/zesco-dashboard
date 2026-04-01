@@ -39,8 +39,8 @@
                             </td>
                             <td class="text-center py-2 px-3">
                                 <template v-if="entry.source === 'manual'">
-                                    <button @click="editEntry(entry)" class="text-blue-600 hover:text-blue-800 dark:text-blue-500 dark:hover:text-blue-400 text-xs mr-2 font-medium">Edit</button>
-                                    <button @click="deleteEntry(entry.id)" class="text-red-600 hover:text-red-800 dark:text-red-500 dark:hover:text-red-400 text-xs font-medium">Delete</button>
+                                    <button @click="editEntry(entry)" class="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white text-xs mr-2 font-medium transition-colors">Edit</button>
+                                    <button @click="deleteEntry(entry.id)" class="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 text-xs font-medium transition-colors">Delete</button>
                                 </template>
                                 <span v-else class="text-xs text-gray-400">—</span>
                             </td>
