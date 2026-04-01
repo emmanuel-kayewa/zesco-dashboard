@@ -46,7 +46,7 @@
         class="px-3 py-1 rounded text-xs"
         :class="
           link.active
-            ? 'bg-zesco-600 text-white'
+            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
             : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
         "
         v-html="link.label"
