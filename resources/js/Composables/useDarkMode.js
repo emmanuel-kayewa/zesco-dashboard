@@ -1,42 +1,52 @@
-import { ref, watch } from 'vue';
+import { ref, watch, effectScope } from "vue";
 
 // Singleton state — shared across all consumers so every component
 // reacts when any component toggles dark mode.
 const isDark = ref(false);
 let initialized = false;
 
-export function useDarkMode() {
-    if (!initialized) {
-        initialized = true;
+// Module-level effect scope so the watcher is never tied to (or
+// cleaned up by) any single component's lifecycle.
+const scope = effectScope(true);
 
-        // Initialize from localStorage or system preference
-        const stored = localStorage.getItem('theme');
-        if (stored) {
-            isDark.value = stored === 'dark';
-        } else {
-            isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        }
+function init() {
+  initialized = true;
 
-        // Apply class to html element
-        const apply = () => {
-            if (isDark.value) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        };
+  // Initialize from localStorage or system preference
+  const stored = localStorage.getItem("theme");
+  if (stored) {
+    isDark.value = stored === "dark";
+  } else {
+    isDark.value = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
 
-        apply();
-
-        watch(isDark, (val) => {
-            localStorage.setItem('theme', val ? 'dark' : 'light');
-            apply();
-        });
+  // Apply class to html element
+  const apply = () => {
+    if (isDark.value) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
     }
+  };
 
-    const toggle = () => {
-        isDark.value = !isDark.value;
-    };
+  apply();
 
-    return { isDark, toggle };
+  scope.run(() => {
+    watch(isDark, (val) => {
+      localStorage.setItem("theme", val ? "dark" : "light");
+      apply();
+    });
+  });
+}
+
+export function useDarkMode() {
+  if (!initialized) {
+    init();
+  }
+
+  const toggle = () => {
+    isDark.value = !isDark.value;
+  };
+
+  return { isDark, toggle };
 }
