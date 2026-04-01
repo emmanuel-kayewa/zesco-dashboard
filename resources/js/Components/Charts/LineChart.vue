@@ -5,6 +5,7 @@
 <script setup>
 import { computed } from 'vue';
 import BaseChart from './BaseChart.vue';
+import { useDarkMode } from '@/Composables/useDarkMode';
 import { useChartPalettes } from '@/Composables/useChartPalettes';
 
 const props = defineProps({
@@ -19,6 +20,7 @@ const props = defineProps({
     forecast: { type: Array, default: () => [] },
 });
 
+const { isDark } = useDarkMode();
 const { categorical } = useChartPalettes();
 
 const effectiveColor = computed(() => {
@@ -64,8 +66,8 @@ const chartOption = computed(() => {
             smooth: props.smooth,
             symbol: 'diamond',
             symbolSize: 6,
-            lineStyle: { width: 2, type: 'dashed', color: '#94a3b8' },
-            itemStyle: { color: '#94a3b8' },
+            lineStyle: { width: 2, type: 'dashed', color: isDark.value ? '#64748b' : '#94a3b8' },
+            itemStyle: { color: isDark.value ? '#64748b' : '#94a3b8' },
         });
     }
 
@@ -80,18 +82,18 @@ const chartOption = computed(() => {
         xAxis: {
             type: 'category',
             data: labels,
-            axisLine: { lineStyle: { color: '#cbd5e1' } },
-            axisLabel: { color: '#64748b', fontSize: 11 },
+            axisLine: { lineStyle: { color: isDark.value ? '#475569' : '#cbd5e1' } },
+            axisLabel: { color: isDark.value ? '#94a3b8' : '#64748b', fontSize: 11 },
         },
         yAxis: {
             type: 'value',
             axisLine: { show: false },
-            splitLine: { lineStyle: { color: '#f1f5f9', type: 'dashed' } },
-            axisLabel: { color: '#64748b', fontSize: 11 },
+            splitLine: { lineStyle: { color: isDark.value ? '#334155' : '#f1f5f9', type: 'dashed' } },
+            axisLabel: { color: isDark.value ? '#94a3b8' : '#64748b', fontSize: 11 },
         },
         legend: props.forecast.length > 0 ? {
             data: [props.seriesName, 'Forecast'],
-            textStyle: { color: '#64748b' },
+            textStyle: { color: isDark.value ? '#94a3b8' : '#64748b' },
         } : undefined,
         series,
     };

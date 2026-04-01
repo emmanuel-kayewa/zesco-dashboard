@@ -5,6 +5,7 @@
 <script setup>
 import { computed } from 'vue';
 import BaseChart from './BaseChart.vue';
+import { useDarkMode } from '@/Composables/useDarkMode';
 import { useChartPalettes } from '@/Composables/useChartPalettes';
 
 defineEmits(['chart-click']);
@@ -21,6 +22,7 @@ const props = defineProps({
     multiSeries: { type: Array, default: () => [] }, // [{name, field, color}]
 });
 
+const { isDark } = useDarkMode();
 const { categorical } = useChartPalettes();
 
 const effectiveColors = computed(() => {
@@ -63,17 +65,17 @@ const chartOption = computed(() => {
     const xAxisConfig = {
         type: props.horizontal ? 'value' : 'category',
         data: props.horizontal ? undefined : labels,
-        axisLine: { lineStyle: { color: '#cbd5e1' } },
-        axisLabel: { color: '#64748b', fontSize: 11 },
-        splitLine: props.horizontal ? { lineStyle: { color: '#f1f5f9', type: 'dashed' } } : undefined,
+        axisLine: { lineStyle: { color: isDark.value ? '#475569' : '#cbd5e1' } },
+        axisLabel: { color: isDark.value ? '#cbd5e1' : '#64748b', fontSize: 11 },
+        splitLine: props.horizontal ? { lineStyle: { color: isDark.value ? '#334155' : '#f1f5f9', type: 'dashed' } } : undefined,
     };
 
     const yAxisConfig = {
         type: props.horizontal ? 'category' : 'value',
         data: props.horizontal ? labels : undefined,
         axisLine: { show: false },
-        splitLine: !props.horizontal ? { lineStyle: { color: '#f1f5f9', type: 'dashed' } } : undefined,
-        axisLabel: { color: '#64748b', fontSize: 11 },
+        splitLine: !props.horizontal ? { lineStyle: { color: isDark.value ? '#334155' : '#f1f5f9', type: 'dashed' } } : undefined,
+        axisLabel: { color: isDark.value ? '#cbd5e1' : '#64748b', fontSize: 11 },
     };
 
     return {
@@ -89,7 +91,7 @@ const chartOption = computed(() => {
         yAxis: yAxisConfig,
         legend: props.multiSeries.length > 0 ? {
             data: props.multiSeries.map(s => s.name),
-            textStyle: { color: '#64748b' },
+            textStyle: { color: isDark.value ? '#cbd5e1' : '#64748b' },
         } : undefined,
         series,
     };

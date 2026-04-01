@@ -5,6 +5,7 @@
 <script setup>
 import { computed } from 'vue';
 import BaseChart from './BaseChart.vue';
+import { useDarkMode } from '@/Composables/useDarkMode';
 import { useChartPalettes } from '@/Composables/useChartPalettes';
 
 const props = defineProps({
@@ -15,6 +16,7 @@ const props = defineProps({
     title: { type: String, default: '' },
 });
 
+const { isDark } = useDarkMode();
 const { sequential } = useChartPalettes();
 
 const effectiveRamp = computed(() => {
@@ -25,7 +27,7 @@ const effectiveRamp = computed(() => {
 const chartOption = computed(() => ({
     title: props.title ? {
         text: props.title,
-        textStyle: { color: '#334155', fontSize: 14, fontWeight: 600 },
+        textStyle: { color: isDark.value ? '#cbd5e1' : '#334155', fontSize: 14, fontWeight: 600 },
     } : undefined,
     tooltip: {
         position: 'top',
@@ -38,13 +40,13 @@ const chartOption = computed(() => ({
         type: 'category',
         data: props.xLabels,
         splitArea: { show: true },
-        axisLabel: { color: '#64748b', fontSize: 10, rotate: 30 },
+        axisLabel: { color: isDark.value ? '#94a3b8' : '#64748b', fontSize: 10, rotate: 30 },
     },
     yAxis: {
         type: 'category',
         data: props.yLabels,
         splitArea: { show: true },
-        axisLabel: { color: '#64748b', fontSize: 10 },
+        axisLabel: { color: isDark.value ? '#94a3b8' : '#64748b', fontSize: 10 },
     },
     visualMap: {
         min: 0,
@@ -56,12 +58,12 @@ const chartOption = computed(() => ({
         inRange: {
             color: effectiveRamp.value,
         },
-        textStyle: { color: '#64748b' },
+        textStyle: { color: isDark.value ? '#94a3b8' : '#64748b' },
     },
     series: [{
         type: 'heatmap',
         data: props.data,
-        label: { show: true, fontSize: 10, color: '#334155' },
+        label: { show: true, fontSize: 10, color: isDark.value ? '#cbd5e1' : '#334155' },
         emphasis: {
             itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.2)' },
         },

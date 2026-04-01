@@ -5,6 +5,7 @@
 <script setup>
 import { computed } from 'vue';
 import BaseChart from './BaseChart.vue';
+import { useDarkMode } from '@/Composables/useDarkMode';
 import { useChartPalettes } from '@/Composables/useChartPalettes';
 
 defineEmits(['chart-click']);
@@ -17,6 +18,7 @@ const props = defineProps({
     roseType: { type: [String, Boolean], default: false }, // 'radius', 'area'
 });
 
+const { isDark } = useDarkMode();
 const { categorical } = useChartPalettes();
 
 const effectiveColors = computed(() => {
@@ -38,7 +40,7 @@ const chartOption = computed(() => ({
         orient: 'vertical',
         right: '5%',
         top: 'center',
-        textStyle: { color: '#64748b', fontSize: 12 },
+        textStyle: { color: isDark.value ? '#94a3b8' : '#64748b', fontSize: 12 },
     },
     series: [{
         type: 'pie',
@@ -48,11 +50,11 @@ const chartOption = computed(() => ({
         avoidLabelOverlap: true,
         itemStyle: {
             borderRadius: 6,
-            borderColor: '#fff',
+            borderColor: isDark.value ? '#1e293b' : '#fff',
             borderWidth: 2,
         },
         label: props.showLabel ? {
-            color: '#64748b',
+            color: isDark.value ? '#94a3b8' : '#64748b',
             fontSize: 12,
         } : { show: false },
         emphasis: {

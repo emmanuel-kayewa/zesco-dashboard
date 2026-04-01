@@ -5,6 +5,7 @@
 <script setup>
 import { computed } from 'vue';
 import BaseChart from './BaseChart.vue';
+import { useDarkMode } from '@/Composables/useDarkMode';
 
 defineEmits(['chart-click']);
 
@@ -18,6 +19,8 @@ const props = defineProps({
     thresholds: { type: Array, default: () => [[0.6, '#dc2626'], [0.8, '#f59e0b'], [1, '#22c55e']] },
 });
 
+const { isDark } = useDarkMode();
+
 const chartOption = computed(() => ({
     series: [{
         type: 'gauge',
@@ -28,7 +31,7 @@ const chartOption = computed(() => ({
         pointer: {
             length: '60%',
             width: 4,
-            itemStyle: { color: '#334155' },
+            itemStyle: { color: isDark.value ? '#cbd5e1' : '#334155' },
         },
         progress: {
             show: true,
@@ -51,14 +54,14 @@ const chartOption = computed(() => ({
             formatter: `{value}${props.unit}`,
             fontSize: 20,
             fontWeight: 600,
-            color: '#334155',
+            color: isDark.value ? '#cbd5e1' : '#334155',
             offsetCenter: [0, '70%'],
         },
         title: {
             show: !!props.title,
             offsetCenter: [0, '90%'],
             fontSize: 12,
-            color: '#94a3b8',
+            color: isDark.value ? '#64748b' : '#94a3b8',
         },
         data: [{ value: props.value, name: props.title }],
         animationDuration: 1000,

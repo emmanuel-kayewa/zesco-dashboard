@@ -282,7 +282,9 @@ const mapOption = computed(() => {
         label: {
           show: true,
           fontSize: 9,
-          color: isDark.value ? "#cbd5e1" : "#475569",
+          color: isDark.value ? "#f1f5f9" : "#1e293b",
+          textBorderColor: isDark.value ? "#0f172a" : "#ffffff",
+          textBorderWidth: 3,
           formatter: (params) => {
             // Only show names for districts that actually have positive data values
             return params.value > 0 ? params.name : "";
