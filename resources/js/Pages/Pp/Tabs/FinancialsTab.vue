@@ -140,9 +140,8 @@
         :error="form.errors.pp_project_id"
       />
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Input
+        <DatePicker
           v-model="form.as_of_date"
-          type="date"
           label="As-Of Date"
           required
           :error="form.errors.as_of_date"
@@ -224,6 +223,7 @@ import { useForm, router } from "@inertiajs/vue3";
 import Card from "@/Components/UI/Card.vue";
 import DataTable from "@/Components/UI/DataTable.vue";
 import Input from "@/Components/UI/Input.vue";
+import DatePicker from "@/Components/UI/DatePicker.vue";
 import Select from "@/Components/UI/Select.vue";
 import Button from "@/Components/UI/Button.vue";
 import Textarea from "@/Components/UI/Textarea.vue";
