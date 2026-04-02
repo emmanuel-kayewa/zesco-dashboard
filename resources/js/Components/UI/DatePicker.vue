@@ -61,6 +61,11 @@ const props = defineProps({
     type: [String, null],
     default: null,
   },
+  size: {
+    type: String,
+    default: '', // opt-in: '', sm, md, lg
+    validator: (value) => ['', 'sm', 'md', 'lg'].includes(value),
+  },
   label: {
     type: String,
     default: "",
@@ -113,8 +118,19 @@ const inputRef = ref(null);
 let datepickerInstance = null;
 
 const inputClasses = computed(() => {
-  let classes =
-    "block w-full rounded-lg border border-zinc-200 border-b-zinc-300/80 bg-white py-3 ps-10 pe-4 text-sm text-zinc-700 shadow-sm transition-colors duration-200 placeholder:text-gray-400 focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:border-white dark:focus:ring-white dark:focus:ring-offset-gray-900";
+  const baseClasses =
+    "block w-full rounded-lg border border-zinc-200 border-b-zinc-300/80 bg-white text-zinc-700 shadow-sm transition-colors duration-200 placeholder:text-gray-400 focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:border-white dark:focus:ring-white dark:focus:ring-offset-gray-900";
+
+  const legacySizingClasses = "py-3 ps-10 pe-4 text-sm";
+
+  const sizeClasses = {
+    sm: "h-8 ps-10 pe-3 text-xs",
+    md: "h-10 ps-10 pe-3 text-sm",
+    lg: "h-12 ps-10 pe-4 text-base",
+  };
+
+  let classes = baseClasses;
+  classes += " " + (props.size ? sizeClasses[props.size] : legacySizingClasses);
 
   if (props.error) {
     classes += " ring-red-500 dark:ring-red-500 text-red-900 dark:text-red-400";
