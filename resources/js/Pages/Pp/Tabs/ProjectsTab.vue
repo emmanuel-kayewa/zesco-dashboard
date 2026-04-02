@@ -388,47 +388,40 @@
           />
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-          <Input
+          <DatePicker
             v-model="form.planned_start"
-            type="date"
             label="Planned Start"
             :error="form.errors.planned_start"
           />
-          <Input
+          <DatePicker
             v-model="form.planned_finish"
-            type="date"
             label="Planned Finish"
             :error="form.errors.planned_finish"
           />
-          <Input
+          <DatePicker
             v-model="form.forecast_finish"
-            type="date"
             label="Forecast Finish"
             :error="form.errors.forecast_finish"
           />
-          <Input
+          <DatePicker
             v-model="form.cod_planned"
-            type="date"
             label="COD Planned"
             :error="form.errors.cod_planned"
           />
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <Input
+          <DatePicker
             v-model="form.cod_actual"
-            type="date"
             label="COD Actual"
             :error="form.errors.cod_actual"
           />
-          <Input
+          <DatePicker
             v-model="form.commissioned_date"
-            type="date"
             label="Commissioned Date"
             :error="form.errors.commissioned_date"
           />
-          <Input
+          <DatePicker
             v-model="form.last_update_date"
-            type="date"
             label="Last Update Date"
             :error="form.errors.last_update_date"
           />
@@ -606,6 +599,7 @@ import { useForm, router } from "@inertiajs/vue3";
 import Card from "@/Components/UI/Card.vue";
 import DataTable from "@/Components/UI/DataTable.vue";
 import Input from "@/Components/UI/Input.vue";
+import DatePicker from "@/Components/UI/DatePicker.vue";
 import Select from "@/Components/UI/Select.vue";
 import Button from "@/Components/UI/Button.vue";
 import Textarea from "@/Components/UI/Textarea.vue";
