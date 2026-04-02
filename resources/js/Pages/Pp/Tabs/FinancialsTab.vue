@@ -143,6 +143,7 @@
         <DatePicker
           v-model="form.as_of_date"
           label="As-Of Date"
+          size="md"
           required
           :error="form.errors.as_of_date"
         />
