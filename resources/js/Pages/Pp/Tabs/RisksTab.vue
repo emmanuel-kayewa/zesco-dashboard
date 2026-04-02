@@ -184,9 +184,8 @@
       />
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <Input v-model="form.owner" label="Owner" :error="form.errors.owner" />
-        <Input
+        <DatePicker
           v-model="form.due_date"
-          type="date"
           label="Due Date"
           :error="form.errors.due_date"
         />
@@ -199,9 +198,8 @@
         />
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Input
+        <DatePicker
           v-model="form.created_date"
-          type="date"
           label="Created Date"
           :error="form.errors.created_date"
         />
@@ -256,6 +254,7 @@ import { useForm, router } from "@inertiajs/vue3";
 import Card from "@/Components/UI/Card.vue";
 import DataTable from "@/Components/UI/DataTable.vue";
 import Input from "@/Components/UI/Input.vue";
+import DatePicker from "@/Components/UI/DatePicker.vue";
 import Select from "@/Components/UI/Select.vue";
 import Button from "@/Components/UI/Button.vue";
 import Textarea from "@/Components/UI/Textarea.vue";
