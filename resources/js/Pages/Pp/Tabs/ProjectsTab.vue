@@ -205,24 +205,11 @@
   >
     <form @submit.prevent="submitEntry" class="space-y-4">
       <!-- Section tabs -->
-      <div
-        class="flex border-b border-gray-200 dark:border-gray-700 gap-1 overflow-x-auto"
-      >
-        <button
-          v-for="tab in formTabs"
-          :key="tab.key"
-          type="button"
-          @click="activeFormTab = tab.key"
-          class="px-3 py-2 text-xs font-medium whitespace-nowrap border-b-2 transition-colors"
-          :class="
-            activeFormTab === tab.key
-              ? 'border-zesco-600 text-zesco-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-          "
-        >
-          {{ tab.label }}
-        </button>
-      </div>
+      <SectionTabs
+        v-model="activeFormTab"
+        :tabs="formTabs"
+        aria-label="Project Form Tabs"
+      />
 
       <!-- Project Info -->
       <div v-show="activeFormTab === 'info'">
@@ -444,6 +431,7 @@
             step="0.01"
             min="0"
             label="Cost (USD)"
+            label-class="truncate"
             :error="form.errors.cost_usd"
           />
           <Input
@@ -452,6 +440,7 @@
             step="0.01"
             min="0"
             label="Cost (ZMW)"
+            label-class="truncate"
             :error="form.errors.cost_zmw"
           />
           <Input
@@ -460,6 +449,7 @@
             step="0.01"
             min="0"
             label="Approved Budget"
+            label-class="truncate"
             :error="form.errors.approved_budget"
           />
         </div>
@@ -470,6 +460,7 @@
             step="0.01"
             min="0"
             label="Committed Cost"
+            label-class="truncate"
             :error="form.errors.committed_cost"
           />
           <Input
@@ -478,6 +469,7 @@
             step="0.01"
             min="0"
             label="Actual Spend"
+            label-class="truncate"
             :error="form.errors.actual_spend"
           />
           <Input
@@ -486,6 +478,7 @@
             step="0.01"
             min="0"
             label="Forecast at Completion"
+            label-class="truncate"
             :error="form.errors.forecast_at_completion"
           />
         </div>
@@ -500,6 +493,7 @@
             step="0.001"
             min="0"
             label="Capacity (MW)"
+            label-class="truncate"
             :error="form.errors.capacity_mw"
           />
           <Input
@@ -508,6 +502,7 @@
             step="0.001"
             min="0"
             label="Commissioned MW"
+            label-class="truncate"
             :error="form.errors.commissioned_mw"
           />
           <Input
@@ -516,6 +511,7 @@
             step="0.001"
             min="0"
             label="Commissioned MW to Date"
+            label-class="truncate"
             :error="form.errors.commissioned_mw_to_date"
           />
         </div>
@@ -526,6 +522,7 @@
             step="0.001"
             min="0"
             label="Commissioned Capacity (MW)"
+            label-class="truncate"
             :error="form.errors.commissioned_capacity_mw"
           />
           <Input
@@ -535,6 +532,7 @@
             min="0"
             max="100"
             label="Progress (%)"
+            label-class="truncate"
             :error="form.errors.progress_pct"
           />
         </div>
@@ -612,6 +610,7 @@ import Button from "@/Components/UI/Button.vue";
 import Textarea from "@/Components/UI/Textarea.vue";
 import Modal from "@/Components/UI/Modal.vue";
 import Badge from "@/Components/UI/Badge.vue";
+import SectionTabs from "@/Components/UI/SectionTabs.vue";
 import PpImportModal from "@/Components/PpImportModal.vue";
 import { useBadges } from "@/Composables/useBadges";
 
