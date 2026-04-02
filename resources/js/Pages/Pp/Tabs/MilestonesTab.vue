@@ -132,16 +132,19 @@
         <DatePicker
           v-model="form.baseline_date"
           label="Baseline Date"
+          size="md"
           :error="form.errors.baseline_date"
         />
         <DatePicker
           v-model="form.actual_date"
           label="Actual Date"
+          size="md"
           :error="form.errors.actual_date"
         />
         <DatePicker
           v-model="form.forecast_date"
           label="Forecast Date"
+          size="md"
           :error="form.errors.forecast_date"
         />
       </div>
