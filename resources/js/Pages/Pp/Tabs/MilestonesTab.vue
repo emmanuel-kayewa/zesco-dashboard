@@ -129,21 +129,18 @@
         <Input v-model="form.owner" label="Owner" :error="form.errors.owner" />
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <Input
+        <DatePicker
           v-model="form.baseline_date"
-          type="date"
           label="Baseline Date"
           :error="form.errors.baseline_date"
         />
-        <Input
+        <DatePicker
           v-model="form.actual_date"
-          type="date"
           label="Actual Date"
           :error="form.errors.actual_date"
         />
-        <Input
+        <DatePicker
           v-model="form.forecast_date"
-          type="date"
           label="Forecast Date"
           :error="form.errors.forecast_date"
         />
@@ -214,6 +211,7 @@ import { useForm, router } from "@inertiajs/vue3";
 import Card from "@/Components/UI/Card.vue";
 import DataTable from "@/Components/UI/DataTable.vue";
 import Input from "@/Components/UI/Input.vue";
+import DatePicker from "@/Components/UI/DatePicker.vue";
 import Select from "@/Components/UI/Select.vue";
 import Button from "@/Components/UI/Button.vue";
 import Textarea from "@/Components/UI/Textarea.vue";
