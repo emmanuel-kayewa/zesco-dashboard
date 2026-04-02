@@ -49,10 +49,10 @@
               required
               :error="form.errors.year"
             />
-            <Input
+            <DatePicker
               v-model="form.report_date"
-              type="date"
               label="Report Date"
+              size="md"
               required
               :error="form.errors.report_date"
             />
@@ -496,6 +496,7 @@ import { Link, useForm, usePage } from "@inertiajs/vue3";
 import AppLayout from "@/Components/Layout/AppLayout.vue";
 import Card from "@/Components/UI/Card.vue";
 import Input from "@/Components/UI/Input.vue";
+import DatePicker from "@/Components/UI/DatePicker.vue";
 import Button from "@/Components/UI/Button.vue";
 import Badge from "@/Components/UI/Badge.vue";
 import Select from "@/Components/UI/Select.vue";
