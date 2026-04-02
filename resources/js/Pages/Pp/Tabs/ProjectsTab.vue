@@ -391,21 +391,25 @@
           <DatePicker
             v-model="form.planned_start"
             label="Planned Start"
+            size="md"
             :error="form.errors.planned_start"
           />
           <DatePicker
             v-model="form.planned_finish"
             label="Planned Finish"
+            size="md"
             :error="form.errors.planned_finish"
           />
           <DatePicker
             v-model="form.forecast_finish"
             label="Forecast Finish"
+            size="md"
             :error="form.errors.forecast_finish"
           />
           <DatePicker
             v-model="form.cod_planned"
             label="COD Planned"
+            size="md"
             :error="form.errors.cod_planned"
           />
         </div>
@@ -413,16 +417,19 @@
           <DatePicker
             v-model="form.cod_actual"
             label="COD Actual"
+            size="md"
             :error="form.errors.cod_actual"
           />
           <DatePicker
             v-model="form.commissioned_date"
             label="Commissioned Date"
+            size="md"
             :error="form.errors.commissioned_date"
           />
           <DatePicker
             v-model="form.last_update_date"
             label="Last Update Date"
+            size="md"
             :error="form.errors.last_update_date"
           />
         </div>
