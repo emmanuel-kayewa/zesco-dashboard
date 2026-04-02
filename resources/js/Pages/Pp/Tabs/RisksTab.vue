@@ -187,6 +187,7 @@
         <DatePicker
           v-model="form.due_date"
           label="Due Date"
+          size="md"
           :error="form.errors.due_date"
         />
         <Select
@@ -201,6 +202,7 @@
         <DatePicker
           v-model="form.created_date"
           label="Created Date"
+          size="md"
           :error="form.errors.created_date"
         />
         <Input
