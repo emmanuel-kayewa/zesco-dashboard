@@ -7,6 +7,8 @@ export default {
         './resources/views/**/*.blade.php',
         './resources/js/**/*.vue',
         './resources/js/**/*.js',
+        './node_modules/flowbite/**/*.js',
+        "./node_modules/flowbite-datepicker/**/*.js",
     ],
     theme: {
         extend: {
@@ -45,5 +47,6 @@ export default {
     plugins: [
         require('@tailwindcss/forms'),
         require('@tailwindcss/typography'),
+        require('flowbite/plugin'),
     ],
 };
