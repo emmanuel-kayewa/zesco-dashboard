@@ -107,8 +107,8 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 items-start">
-                    <Input v-model="form.start_date" type="date" label="Start Date" size="md" />
-                    <Input v-model="form.end_date" type="date" label="End Date" size="md" />
+                    <DatePicker v-model="form.start_date" label="Start Date" size="md" />
+                    <DatePicker v-model="form.end_date" label="End Date" size="md" />
                 </div>
 
                 <div class="flex items-center gap-3 pt-2">
@@ -131,6 +131,7 @@ import AppLayout from '@/Components/Layout/AppLayout.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import Card from '@/Components/UI/Card.vue';
 import Input from '@/Components/UI/Input.vue';
+import DatePicker from '@/Components/UI/DatePicker.vue';
 import Select from '@/Components/UI/Select.vue';
 import Button from '@/Components/UI/Button.vue';
 import Textarea from '@/Components/UI/Textarea.vue';
