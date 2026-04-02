@@ -46,6 +46,7 @@
             <DatePicker
               v-model="form.report_date"
               label="Report Date"
+              size="md"
               required
               :error="form.errors.report_date"
             />
