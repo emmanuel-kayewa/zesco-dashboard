@@ -122,11 +122,9 @@
           :error="form.errors.period_type"
         />
 
-        <Input
+        <DatePicker
           v-model="form.period_date"
-          type="date"
           label="Period Date"
-          size="md"
           required
           :error="form.errors.period_date"
         />
@@ -177,6 +175,7 @@ import Breadcrumb from "@/Components/UI/Breadcrumb.vue";
 import Card from "@/Components/UI/Card.vue";
 import DataTable from "@/Components/UI/DataTable.vue";
 import Input from "@/Components/UI/Input.vue";
+import DatePicker from "@/Components/UI/DatePicker.vue";
 import Select from "@/Components/UI/Select.vue";
 import Button from "@/Components/UI/Button.vue";
 import Textarea from "@/Components/UI/Textarea.vue";
