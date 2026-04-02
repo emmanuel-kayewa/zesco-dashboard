@@ -12,6 +12,7 @@ import {
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import { useDarkMode } from '@/Composables/useDarkMode';
+import { enqueueThemeRebuild } from '@/Utils/chartThemeQueue';
 
 echarts.use([
     LineChart, BarChart, PieChart, GaugeChart, HeatmapChart, ScatterChart, MapChart,
@@ -125,10 +126,8 @@ watch(
 );
 
 // React to dark mode toggle via the reactive composable ref
-watch(isDark, async () => {
-    // Ensure DOM/theme class updates settle before re-init.
-    await nextTick();
-    initChart();
+watch(isDark, () => {
+    enqueueThemeRebuild(() => initChart());
 });
 
 onUnmounted(() => {

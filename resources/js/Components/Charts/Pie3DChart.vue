@@ -8,6 +8,7 @@ import Highcharts from "highcharts";
 import Highcharts3D from "highcharts/highcharts-3d";
 import { useDarkMode } from "@/Composables/useDarkMode";
 import { useChartPalettes } from "@/Composables/useChartPalettes";
+import { enqueueThemeRebuild } from "@/Utils/chartThemeQueue";
 
 // Enable 3D module (handle ESM/CJS interop + HMR)
 const init3d =
@@ -168,13 +169,17 @@ watch(
     props.depth,
     props.alpha,
     props.showLegend,
-    isDark.value,
   ],
   () => {
     nextTick(() => initChart());
   },
   { deep: true },
 );
+
+// Stagger theme rebuilds so many charts don't freeze the UI at once
+watch(isDark, () => {
+    enqueueThemeRebuild(() => initChart());
+});
 
 onUnmounted(() => {
   resizeObserver?.disconnect();
