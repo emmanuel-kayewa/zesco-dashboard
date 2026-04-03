@@ -222,7 +222,7 @@
         v-model="activeTab"
         :tabs="tabs"
         size="md"
-        active-class="border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-700/40 dark:ring-white/10"
+        active-class="border-transparent text-white dark:text-white bg-black dark:bg-gray-700/40 dark:ring-white/10"
         container-class="mb-4 no-print pr-2"
         aria-label="Project Detail Tabs"
       />
