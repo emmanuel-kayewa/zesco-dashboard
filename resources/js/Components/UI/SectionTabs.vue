@@ -21,7 +21,7 @@
       <span>{{ tab.label }}</span>
       <span
         v-if="tab.count !== undefined && tab.count !== null"
-        class="ml-1.5 text-xs bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full"
+        class="ml-1.5 text-xs bg-white/20 dark:bg-gray-700 px-1.5 py-0.5 rounded-full"
       >
         {{ tab.count }}
       </span>
@@ -60,7 +60,7 @@ const emit = defineEmits(["update:modelValue", "tab-change"]);
 
 const tabBaseClasses = computed(() => {
   if (props.size === "md") {
-    return "px-4 py-2.5 text-sm font-medium rounded-md border-b-2";
+    return "px-4 py-2 text-sm font-medium rounded-md border-b-2";
   }
   return "px-3 py-2 text-xs font-medium rounded-md border-b-2";
 });
