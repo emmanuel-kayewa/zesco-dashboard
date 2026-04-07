@@ -11,7 +11,7 @@
         :tabs="tabs"
         mode="link"
         size="md"
-        active-class="border-transparent text-white dark:text-white bg-black dark:bg-gray-700/40 dark:ring-white/10"
+        active-class="border-transparent bg-gray-200 text-gray-800 dark:text-white dark:bg-gray-700/40 dark:ring-white/10"
         aria-label="PP Tabs"
       />
     </div>
