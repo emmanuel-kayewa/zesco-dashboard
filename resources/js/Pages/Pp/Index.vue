@@ -114,11 +114,11 @@ const tabs = [
     label: "Programme Outputs",
     href: "/pp/programme-outputs",
   },
-  {
-    key: "grid-impact-studies",
-    label: "Grid Studies",
-    href: "/pp/grid-impact-studies",
-  },
+  // {
+  //   key: "grid-impact-studies",
+  //   label: "Grid Studies",
+  //   href: "/pp/grid-impact-studies",
+  // },
   { key: "workstreams", label: "Workstreams", href: "/pp/workstreams" },
 ];
 
