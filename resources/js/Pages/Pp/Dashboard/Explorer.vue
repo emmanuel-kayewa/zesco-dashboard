@@ -718,7 +718,7 @@
               explorerData.breakdowns.sector &&
               !explorerData.breakdowns.sector.isFiltered
             "
-            class="col-span-1 md:col-span-6 lg:col-span-4"
+            class="col-span-1 md:col-span-6 lg:col-span-6"
           >
             <ChartCard
               :title="`Projects by ${explorerData.breakdowns.sector.label}`"
@@ -876,7 +876,7 @@
           <!-- ── Investment Chart (always shown if sectors vary) ── -->
           <div
             v-if="explorerData.sectorInvestment.length > 1"
-            class="col-span-1 sm:col-span-2 md:col-span-6 lg:col-span-8"
+            class="col-span-1 sm:col-span-2 md:col-span-6 lg:col-span-6"
           >
             <ChartCard title="Investment by Sector — Committed vs Paid (USD)">
               <template #default="{ zoomedHeight }">
