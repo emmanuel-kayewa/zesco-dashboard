@@ -67,6 +67,7 @@ class PpImportController extends Controller
             'headers'          => $headers,
             'auto_mapping'     => $autoMap,
             'preview'          => array_slice($mappedData ?: $rows, 0, 50),
+            'rows'             => $mappedData ?: $rows,
             'total_rows'       => count($rows),
             'mapped_fields'    => array_values($autoMap),
             'available_fields' => PpImport::availableFields($entity),
@@ -188,6 +189,32 @@ class PpImportController extends Controller
         return PpProject::where('project_code', trim($code))->value('id');
     }
 
+    private function resolveProjectIdFromRow(array $row): ?int
+    {
+        $projectId = $this->cleanInt($row['pp_project_id'] ?? null);
+        if ($projectId) {
+            $exists = PpProject::whereKey($projectId)->exists();
+            if ($exists) {
+                return $projectId;
+            }
+        }
+
+        $projectCode = trim((string) ($row['_project_code'] ?? $row['project_code'] ?? ''));
+        if ($projectCode !== '') {
+            $resolved = $this->resolveProjectId($projectCode);
+            if ($resolved) {
+                return $resolved;
+            }
+        }
+
+        $projectName = trim((string) ($row['_project_name'] ?? $row['project_name'] ?? ''));
+        if ($projectName !== '') {
+            return PpProject::where('project_name', $projectName)->value('id');
+        }
+
+        return null;
+    }
+
     private function upsertProject(array $row): bool
     {
         $code = trim($row['project_code'] ?? '');
@@ -242,7 +269,7 @@ class PpImportController extends Controller
                 'actual_spend'             => $this->cleanNumeric($row['actual_spend'] ?? null),
                 'forecast_at_completion'   => $this->cleanNumeric($row['forecast_at_completion'] ?? null),
                 'next_decision'            => trim($row['next_decision'] ?? '') ?: null,
-            ], fn ($v) => $v !== null)
+            ], fn($v) => $v !== null)
         );
 
         return true;
@@ -253,7 +280,7 @@ class PpImportController extends Controller
         $code = trim($row['milestone_code'] ?? '');
         if (!$code) return false;
 
-        $projectId = $this->resolveProjectId($row['_project_code'] ?? null);
+        $projectId = $this->resolveProjectIdFromRow($row);
 
         PpMilestone::updateOrCreate(
             ['milestone_code' => $code],
@@ -269,7 +296,7 @@ class PpImportController extends Controller
                 'owner'         => trim($row['owner'] ?? '') ?: null,
                 'status'        => trim($row['status'] ?? 'Pending') ?: 'Pending',
                 'notes'         => trim($row['notes'] ?? '') ?: null,
-            ], fn ($v) => $v !== null)
+            ], fn($v) => $v !== null)
         );
 
         return true;
@@ -280,7 +307,7 @@ class PpImportController extends Controller
         $code = trim($row['finance_code'] ?? '');
         if (!$code) return false;
 
-        $projectId = $this->resolveProjectId($row['_project_code'] ?? null);
+        $projectId = $this->resolveProjectIdFromRow($row);
 
         PpFinancial::updateOrCreate(
             ['finance_code' => $code],
@@ -291,7 +318,7 @@ class PpImportController extends Controller
                 'paid_to_date'     => $this->cleanNumeric($row['paid_to_date'] ?? null),
                 'currency'         => trim($row['currency'] ?? 'USD'),
                 'notes'            => trim($row['notes'] ?? '') ?: null,
-            ], fn ($v) => $v !== null)
+            ], fn($v) => $v !== null)
         );
 
         return true;
@@ -302,7 +329,7 @@ class PpImportController extends Controller
         $code = trim($row['risk_code'] ?? '');
         if (!$code) return false;
 
-        $projectId = $this->resolveProjectId($row['_project_code'] ?? null);
+        $projectId = $this->resolveProjectIdFromRow($row);
 
         $likelihood = $this->cleanInt($row['likelihood'] ?? null) ?? 1;
         $impact     = $this->cleanInt($row['impact'] ?? null) ?? 1;
@@ -326,7 +353,7 @@ class PpImportController extends Controller
                 'created_date'     => $this->cleanDate($row['created_date'] ?? null),
                 'days_open'        => $this->cleanInt($row['days_open'] ?? null),
                 'notes'            => trim($row['notes'] ?? '') ?: null,
-            ], fn ($v) => $v !== null)
+            ], fn($v) => $v !== null)
         );
 
         return true;
@@ -341,7 +368,7 @@ class PpImportController extends Controller
             ['record_code' => $code],
             array_filter([
                 'scope'             => trim($row['scope'] ?? '') ?: null,
-                'pp_project_id'     => $this->resolveProjectId($row['_project_code'] ?? null),
+                'pp_project_id'     => $this->resolveProjectIdFromRow($row),
                 'wayleave_received' => $this->cleanInt($row['wayleave_received'] ?? null),
                 'wayleave_cleared'  => $this->cleanInt($row['wayleave_cleared'] ?? null),
                 'wayleave_pending'  => $this->cleanInt($row['wayleave_pending'] ?? null),
@@ -351,7 +378,7 @@ class PpImportController extends Controller
                 'paps'              => $this->cleanInt($row['paps'] ?? null),
                 'comp_paid_zmw'     => $this->cleanNumeric($row['comp_paid_zmw'] ?? null),
                 'notes'             => trim($row['notes'] ?? '') ?: null,
-            ], fn ($v) => $v !== null)
+            ], fn($v) => $v !== null)
         );
 
         return true;
@@ -371,7 +398,7 @@ class PpImportController extends Controller
                 'transformers_energised'  => $this->cleanInt($row['transformers_energised'] ?? null),
                 'jobs_pending_connection' => $this->cleanInt($row['jobs_pending_connection'] ?? null),
                 'notes'                   => trim($row['notes'] ?? '') ?: null,
-            ], fn ($v) => $v !== null)
+            ], fn($v) => $v !== null)
         );
 
         return true;
@@ -385,7 +412,7 @@ class PpImportController extends Controller
         PpGridImpactStudy::updateOrCreate(
             ['study_code' => $code],
             array_filter([
-                'pp_project_id'        => $this->resolveProjectId($row['_project_code'] ?? null),
+                'pp_project_id'        => $this->resolveProjectIdFromRow($row),
                 'study_type'           => trim($row['study_type'] ?? '') ?: null,
                 'name'                 => trim($row['name'] ?? '') ?: null,
                 'capacity_mw'          => $this->cleanNumeric($row['capacity_mw'] ?? null),
@@ -401,7 +428,7 @@ class PpImportController extends Controller
                 'stage_revisions'      => $this->cleanBool($row['stage_revisions'] ?? false),
                 'stage_approved'       => $this->cleanBool($row['stage_approved'] ?? false),
                 'notes'                => trim($row['notes'] ?? '') ?: null,
-            ], fn ($v) => $v !== null)
+            ], fn($v) => $v !== null)
         );
 
         return true;
@@ -412,7 +439,7 @@ class PpImportController extends Controller
         $code = trim($row['workstream_code'] ?? '');
         if (!$code) return false;
 
-        $projectId = $this->resolveProjectId($row['_project_code'] ?? null);
+        $projectId = $this->resolveProjectIdFromRow($row);
         if (!$projectId) return false;
 
         PpWorkstream::updateOrCreate(
@@ -425,7 +452,7 @@ class PpImportController extends Controller
                 'variance_pct'  => $this->cleanNumeric($row['variance_pct'] ?? null),
                 'status'        => trim($row['status'] ?? 'On Track') ?: 'On Track',
                 'comments'      => trim($row['comments'] ?? '') ?: null,
-            ], fn ($v) => $v !== null)
+            ], fn($v) => $v !== null)
         );
 
         return true;
