@@ -84,14 +84,16 @@
           <div class="w-full max-w-md">
             <form @submit.prevent="submit">
               <div class="relative">
-                <input
+                <textarea
                   ref="inputRef"
                   v-model="input"
-                  type="text"
                   :disabled="loading"
+                  rows="1"
                   placeholder="Ask a question..."
-                  class="w-full pl-4 pr-12 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-zesco-400/50 dark:focus:ring-zesco-500/50 focus:border-zesco-400 dark:focus:border-zesco-500 transition"
+                  class="w-full pl-4 pr-24 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-zesco-400/50 dark:focus:ring-zesco-500/50 focus:border-zesco-400 dark:focus:border-zesco-500 transition resize-none overflow-hidden leading-5"
+                  @input="resizeInput"
                   @keydown.enter.exact.prevent="submit"
+                  @keydown.enter.shift.exact.stop
                 />
                 <div
                   class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1"
@@ -267,14 +269,16 @@
               class="rounded-[28px] border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm"
             >
               <div class="px-4 pt-3">
-                <input
+                <textarea
                   ref="inputRef"
                   v-model="input"
-                  type="text"
                   :disabled="loading"
+                  rows="1"
                   placeholder="Add a reply..."
-                  class="w-full border-0 bg-transparent px-0 py-1 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-0"
+                  class="w-full border-0 bg-transparent px-0 py-1 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-0 resize-none overflow-hidden leading-5"
+                  @input="resizeInput"
                   @keydown.enter.exact.prevent="submit"
+                  @keydown.enter.shift.exact.stop
                 />
               </div>
 
@@ -456,6 +460,7 @@ function scrollToBottom() {
 function clear() {
   chat.value = [];
   input.value = "";
+  nextTick(() => resizeInput());
   nextTick(() => inputRef.value?.focus());
 }
 
@@ -483,6 +488,7 @@ async function submit() {
   chat.value.push({ role: "user", content: q });
   input.value = "";
   loading.value = true;
+  nextTick(() => resizeInput());
   scrollToBottom();
 
   try {
@@ -515,6 +521,18 @@ async function submit() {
   } finally {
     loading.value = false;
     scrollToBottom();
+  }
+}
+
+function resizeInput() {
+  const el = inputRef.value;
+  if (!el) return;
+  try {
+    el.style.height = "auto";
+    const maxHeight = 160;
+    el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
+  } catch {
+    // ignore
   }
 }
 </script>
