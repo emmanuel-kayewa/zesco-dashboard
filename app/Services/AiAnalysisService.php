@@ -58,15 +58,34 @@ class AiAnalysisService
 You are a senior business intelligence analyst at ZESCO Limited, Zambia's primary electricity utility company.
 Analyze the provided KPI data and generate an executive briefing.
 
-Your response must be valid JSON with this structure:
+CRITICAL: Every value in your JSON must be the correct type. "summary", "risk_assessment", and "outlook" MUST be plain-text strings (human-readable paragraphs), NOT objects or arrays. "key_concerns", "positive_highlights", and "recommendations" MUST be arrays of strings.
+
+Your response must be valid JSON with EXACTLY this structure:
 {
-  "summary": "A 2-3 paragraph executive narrative highlighting the overall state of the organisation",
-  "key_concerns": ["concern 1", "concern 2", ...],
-  "positive_highlights": ["highlight 1", "highlight 2", ...],
-  "recommendations": ["recommendation 1", "recommendation 2", ...],
-  "risk_assessment": "brief overall risk assessment",
-  "outlook": "forward-looking statement about trends"
+  "summary": "A 2-3 paragraph executive narrative (MUST be a string, not an object) highlighting overall performance across all directorates. Reference specific KPI values, directorate names, and percentages.",
+  "key_concerns": ["Each concern is a plain-text sentence string", "Another concern string"],
+  "positive_highlights": ["Each highlight is a plain-text sentence string", "Another highlight string"],
+  "recommendations": ["Each recommendation is a plain-text sentence string", "Another recommendation string"],
+  "risk_assessment": "A single paragraph string summarising overall risk posture (MUST be a string, not an object)",
+  "outlook": "A single paragraph string with forward-looking statement about trends (MUST be a string, not an object)",
+  "charts": [
+    {
+      "type": "horizontal_bar",
+      "title": "Directorate KPI Completion",
+      "labels": ["Directorate A", "Directorate B"],
+      "values": [85, 72],
+      "series_name": "Completion %"
+    }
+  ]
 }
+
+Chart guidelines:
+- Include 1-3 charts that visualise the most important data points from your analysis
+- Supported chart types: "bar", "horizontal_bar", "line", "pie", "gauge"
+- For gauge charts use: { "type": "gauge", "title": "...", "value": 72, "max": 100, "unit": "%", "series_name": "..." }
+- Use real directorate names and actual KPI values from the data
+- Keep labels short (max 15 chars) so they fit in a sidebar
+- Choose chart types that best represent the data: horizontal_bar for comparisons, pie for proportions, gauge for single scores, line for trends
 
 Be specific with numbers. Reference actual directorate names and KPI values. Be concise but insightful.
 PROMPT;
@@ -74,6 +93,8 @@ PROMPT;
         $result = $this->ai->provider()->chatWithJson($systemPrompt, json_encode($contextData));
 
         if (!empty($result)) {
+            // Normalize keys — the LLM sometimes returns alternate key names
+            $result = $this->normalizeExecutiveInsights($result);
             $result['generated_at'] = now()->toISOString();
             $result['provider'] = $this->ai->getIdentifier();
             $this->setCache($cacheKey, $result, $ttl);
@@ -205,8 +226,17 @@ Return valid JSON:
   "answer": "your detailed answer to the question",
   "data_points": ["key data point 1", "key data point 2"],
   "confidence": "high|medium|low",
-  "follow_up_suggestions": ["related question the user might want to ask"]
+  "follow_up_suggestions": ["related question the user might want to ask"],
+  "charts": []
 }
+
+Chart guidelines (optional — only include when a visualisation genuinely helps the user):
+- Add a "charts" array with 0-2 charts when the answer involves comparisons, distributions, or trends
+- Supported types: "bar", "horizontal_bar", "line", "pie", "gauge"
+- Bar/line/pie format: { "type": "bar", "title": "...", "labels": [...], "values": [...], "series_name": "..." }
+- Gauge format: { "type": "gauge", "title": "...", "value": 72, "max": 100, "unit": "%" }
+- Keep labels short (max 15 chars). Use real data from the context.
+- If the question is simple or text-only answers suffice, leave "charts" as an empty array.
 PROMPT;
 
         $userPrompt = "QUESTION: {$question}\n\nAVAILABLE DATA:\n" . json_encode($context);
@@ -537,6 +567,141 @@ PROMPT;
     // ═══════════════════════════════════════════════════════════
     //  Context Gathering (Private)
     // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Normalize executive insight keys so the frontend always receives a consistent schema.
+     * The LLM sometimes returns alternate key names or wrong types (objects instead of strings).
+     */
+    private function normalizeExecutiveInsights(array $result): array
+    {
+        // Use the most narrative-sounding string as summary — prefer 'outlook' over data-dumps
+        if (empty($result['summary']) || !is_string($result['summary'])) {
+            $result['summary'] = $this->pickString($result, ['summary', 'executive_summary', 'overall_summary', 'overview', 'outlook', 'risk_summary', 'trend_analysis']);
+        }
+
+        // Ensure 'key_concerns' is an array of strings — extract from structured issues if needed
+        if (empty($result['key_concerns']) || !$this->isStringList($result['key_concerns'])) {
+            $concerns = $this->pickStringArray($result, ['key_concerns', 'concerns', 'risks', 'risk_factors']);
+            if (empty($concerns)) {
+                $concerns = $this->extractIssueStrings($result, ['outstanding_issues', 'outstanding_anomalies', 'outstanding_data_issues']);
+            }
+            $result['key_concerns'] = $concerns;
+        }
+
+        // Ensure 'positive_highlights' is an array of strings
+        if (empty($result['positive_highlights']) || !$this->isStringList($result['positive_highlights'])) {
+            $result['positive_highlights'] = $this->pickStringArray($result, ['positive_highlights', 'highlights', 'positives', 'achievements']);
+        }
+
+        // Ensure 'recommendations' is an array of strings
+        if (empty($result['recommendations']) || !$this->isStringList($result['recommendations'])) {
+            $result['recommendations'] = $this->pickStringArray($result, ['recommendations', 'suggested_actions', 'actions']);
+        }
+
+        // Ensure 'risk_assessment' is a string
+        if (empty($result['risk_assessment']) || !is_string($result['risk_assessment'])) {
+            $result['risk_assessment'] = $this->pickString($result, ['risk_assessment', 'risk_summary', 'risk_trend']);
+        }
+
+        // Ensure 'outlook' is a string
+        if (empty($result['outlook']) || !is_string($result['outlook'])) {
+            $result['outlook'] = $this->pickString($result, ['outlook', 'forward_outlook', 'trend_analysis']);
+        }
+
+        return $result;
+    }
+
+    private function isStringList(mixed $val): bool
+    {
+        return is_array($val) && !empty($val) && array_is_list($val) && is_string($val[0]);
+    }
+
+    /**
+     * Extract human-readable concern strings from structured issue arrays.
+     * Handles the coder model's typical output: [{ directorate, kpi, issue }, ...]
+     */
+    private function extractIssueStrings(array $data, array $keys): array
+    {
+        $out = [];
+        foreach ($keys as $key) {
+            if (!isset($data[$key]) || !is_array($data[$key])) continue;
+            foreach ($data[$key] as $item) {
+                if (is_string($item)) {
+                    $out[] = $item;
+                } elseif (is_array($item)) {
+                    $dir = $item['directorate'] ?? '';
+                    $kpi = $item['kpi'] ?? '';
+                    $issue = $item['issue'] ?? $item['description'] ?? '';
+                    if ($issue) {
+                        $label = implode(' — ', array_filter([$dir, $kpi]));
+                        $out[] = $label ? "{$label}: {$issue}" : $issue;
+                    }
+                }
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Pick the first string value from $data matching one of the candidate keys.
+     * If the value is an array/object, convert it to a readable string.
+     */
+    private function pickString(array $data, array $keys): ?string
+    {
+        foreach ($keys as $key) {
+            if (!isset($data[$key])) continue;
+            $v = $data[$key];
+            if (is_string($v) && $v !== '') return $v;
+            if (is_array($v)) {
+                // If it's a list of strings, join them
+                if (array_is_list($v)) {
+                    $joined = implode(' ', array_filter($v, 'is_string'));
+                    if ($joined !== '') return $joined;
+                }
+                // Associative array — stringify key-value pairs
+                $parts = [];
+                foreach ($v as $k => $val) {
+                    if (is_array($val)) {
+                        $parts[] = ucfirst(str_replace('_', ' ', $k)) . ': ' . implode(', ', array_filter($val, 'is_string'));
+                    } else {
+                        $parts[] = ucfirst(str_replace('_', ' ', $k)) . ': ' . $val;
+                    }
+                }
+                $joined = implode('. ', $parts);
+                if ($joined !== '') return $joined;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Pick the first array-of-strings value from $data matching one of the candidate keys.
+     */
+    private function pickStringArray(array $data, array $keys): array
+    {
+        foreach ($keys as $key) {
+            if (!isset($data[$key]) || !is_array($data[$key])) continue;
+            $v = $data[$key];
+            if (array_is_list($v) && !empty($v)) {
+                return array_values(array_filter($v, 'is_string'));
+            }
+            // Associative array — try extracting values or keys
+            if (!empty($v)) {
+                $strings = [];
+                foreach ($v as $k => $val) {
+                    if (is_string($val)) {
+                        $strings[] = $val;
+                    } elseif (is_array($val)) {
+                        foreach ($val as $item) {
+                            if (is_string($item)) $strings[] = $item;
+                        }
+                    }
+                }
+                if (!empty($strings)) return $strings;
+            }
+        }
+        return [];
+    }
 
     private function gatherExecutiveContext(): array
     {
