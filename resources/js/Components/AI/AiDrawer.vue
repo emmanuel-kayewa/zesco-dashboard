@@ -76,7 +76,7 @@
             </h2>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               {{ scopeLabel }}
-              <span v-if="provider" class="ml-1">· {{ provider }}</span>
+              <!-- <span v-if="provider" class="ml-1">· {{ provider }}</span> -->
             </p>
           </div>
 
