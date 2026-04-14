@@ -7,177 +7,208 @@
             { label: 'AI Insights', current: true }
         ]" />
 
-        <!-- AI Status Banner -->
-        <div v-if="!aiAvailable" class="mb-6 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-4">
-            <div class="flex items-center gap-3">
-                <svg class="w-5 h-5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                </svg>
-                <div>
-                    <p class="text-sm font-medium text-amber-800 dark:text-amber-200">AI Service Unavailable</p>
-                    <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Ensure Ollama is running locally. Run <code class="bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">ollama serve</code> to start.</p>
-                </div>
-            </div>
-        </div>
+        <!-- Mobile: Summary toggle -->
+        <div class="lg:hidden mb-4">
+            <button @click="summaryOpen = !summaryOpen"
+                    class="w-full flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm">
+                <span class="flex items-center gap-2">
+                    <SparklesIcon class="w-4 h-4 text-zesco-500" />
+                    Executive Summary
+                    <span v-if="insights" class="h-1.5 w-1.5 rounded-full bg-green-400"></span>
+                </span>
+                <ChevronDownIcon :class="['w-4 h-4 text-gray-400 transition-transform duration-200', summaryOpen && 'rotate-180']" />
+            </button>
 
-        <div v-else class="mb-6 rounded-lg border border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800 p-4">
-            <div class="flex items-center gap-3">
-                <div class="relative flex h-2.5 w-2.5">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                </div>
-                <p class="text-sm text-green-700 dark:text-green-300">AI Connected — <span class="font-medium">{{ aiProvider }}</span></p>
-            </div>
-        </div>
-
-        <!-- AI Chat / Query -->
-        <Card title="Ask AI" class="mb-6">
-            <template #actions>
-                <button @click="clearChat" class="text-xs text-gray-400 hover:text-gray-600" v-if="chatHistory.length">Clear</button>
-            </template>
-            <div class="space-y-4">
-                <!-- Chat History -->
-                <div v-if="chatHistory.length" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                    <div v-for="(msg, idx) in chatHistory" :key="idx"
-                         :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
-                        <div :class="[
-                            'max-w-[85%] rounded-lg px-4 py-3 text-sm',
-                            msg.role === 'user'
-                                ? 'bg-black dark:bg-white text-white dark:text-black'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
-                        ]">
-                            <p class="whitespace-pre-wrap">{{ msg.content }}</p>
-                            <div v-if="msg.dataPoints && msg.dataPoints.length" class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
-                                <p class="text-xs font-medium mb-1 opacity-70">Key Data Points:</p>
-                                <ul class="text-xs space-y-0.5 opacity-80">
-                                    <li v-for="dp in msg.dataPoints" :key="dp">• {{ dp }}</li>
-                                </ul>
-                            </div>
-                            <div v-if="msg.suggestions && msg.suggestions.length" class="mt-2 flex flex-wrap gap-1.5">
-                                <button v-for="s in msg.suggestions" :key="s" @click="askQuestion(s)"
-                                        class="text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">
-                                    {{ s }}
+            <Transition
+                enter-active-class="transition-all duration-300 ease-out"
+                enter-from-class="max-h-0 opacity-0"
+                enter-to-class="max-h-[600px] opacity-100"
+                leave-active-class="transition-all duration-200 ease-in"
+                leave-from-class="max-h-[600px] opacity-100"
+                leave-to-class="max-h-0 opacity-0"
+            >
+                <div v-show="summaryOpen" class="mt-2 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+                    <div class="p-4 max-h-[500px] overflow-y-auto">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Executive AI Summary</h3>
+                            <div class="flex items-center gap-2">
+                                <span v-if="insights?.generated_at" class="text-xs text-gray-400">{{ formatTime(insights.generated_at) }}</span>
+                                <button @click="loadInsights(true)" :disabled="insightsLoading"
+                                        class="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1">
+                                    <ArrowPathIcon :class="['w-3.5 h-3.5', insightsLoading && 'animate-spin']" />
+                                    Refresh
                                 </button>
                             </div>
                         </div>
+                        <InsightsSummaryContent :insights="insights" :insights-loading="insightsLoading" :elapsed-insights="elapsedInsights" :ai-available="aiAvailable" :error="insightsError" @generate="loadInsights()" />
                     </div>
-                    <div v-if="queryLoading" class="flex justify-start">
-                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-3 text-sm text-gray-500">
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Analyzing data<span v-if="elapsedQuery"> ({{ elapsedQuery }}s)</span>...
+                </div>
+            </Transition>
+        </div>
+
+        <!-- Two-column layout: Chat (left) + Summary sidebar (right) -->
+        <div class="flex gap-6 items-start">
+            <!-- Chat column -->
+            <div class="flex-1 min-w-0">
+                <Card title="Ask AI">
+                    <template #actions>
+                        <button @click="clearChat" class="text-xs text-gray-400 hover:text-gray-600" v-if="chatHistory.length">Clear</button>
+                    </template>
+                    <div class="space-y-4">
+                        <!-- Chat History -->
+                        <div v-if="chatHistory.length" class="max-h-[500px] overflow-y-auto pr-2">
+                            <div class="w-full space-y-8 py-2">
+                                <div v-for="(msg, idx) in chatHistory" :key="idx">
+                                    <!-- User message -->
+                                    <div v-if="msg.role === 'user'" class="flex justify-end">
+                                        <div class="max-w-[85%] text-right">
+                                            <div class="inline-flex rounded-full bg-gray-100 dark:bg-gray-700/60 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-100 shadow-sm">
+                                                <p class="whitespace-pre-wrap break-words">{{ msg.content }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- AI message -->
+                                    <div v-else class="space-y-4">
+                                        <div class="text-[15px] leading-7 tracking-[-0.01em] text-gray-700 dark:text-gray-200">
+                                            <p class="whitespace-pre-wrap break-words">{{ msg.content }}</p>
+                                        </div>
+
+                                        <div v-if="msg.dataPoints && msg.dataPoints.length"
+                                             class="rounded-2xl border border-zesco-100 bg-zesco-50/70 px-4 py-3 dark:border-zesco-800/40 dark:bg-zesco-900/20">
+                                            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-zesco-700 dark:text-zesco-300">Data points</p>
+                                            <ul class="mt-2 space-y-1.5 pl-4 text-sm text-gray-700 dark:text-gray-200 list-disc">
+                                                <li v-for="dp in msg.dataPoints" :key="dp">{{ dp }}</li>
+                                            </ul>
+                                        </div>
+
+                                        <!-- AI Charts (optional, only when AI includes them) -->
+                                        <div v-if="msg.charts && msg.charts.length" class="space-y-3">
+                                            <AiChart v-for="(chart, ci) in msg.charts" :key="ci" :chart="chart" />
+                                        </div>
+
+                                        <div v-if="msg.suggestions && msg.suggestions.length" class="space-y-2">
+                                            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500">Try asking</p>
+                                            <div class="flex flex-wrap gap-2">
+                                                <button v-for="s in msg.suggestions" :key="s" @click="askQuestion(s)"
+                                                        class="rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-200 transition hover:border-zesco-300 hover:text-zesco-700 dark:hover:border-zesco-500 dark:hover:text-zesco-300">
+                                                    {{ s }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Thinking indicator -->
+                                <div v-if="queryLoading" class="space-y-3">
+                                    <div class="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
+                                        <div class="flex gap-1">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-zesco-400 animate-bounce" style="animation-delay: 0ms" />
+                                            <span class="w-1.5 h-1.5 rounded-full bg-zesco-400 animate-bounce" style="animation-delay: 150ms" />
+                                            <span class="w-1.5 h-1.5 rounded-full bg-zesco-400 animate-bounce" style="animation-delay: 300ms" />
+                                        </div>
+                                        <span class="text-xs font-medium">Thinking<span v-if="elapsedQuery"> ({{ elapsedQuery }}s)</span>…</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Quick Prompts -->
+                        <div v-if="!chatHistory.length && !queryLoading">
+                            <div class="relative flex items-center">
+                                <button type="button" @click="scrollPrompts(-200)"
+                                        class="hidden md:flex flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition">
+                                    <ChevronLeftIcon class="w-4 h-4" />
+                                </button>
+
+                                <div ref="promptsContainer"
+                                     class="flex gap-2 overflow-x-auto scroll-smooth flex-1 px-1 py-0.5 prompts-scroll">
+                                    <button v-for="prompt in quickPrompts" :key="prompt" @click="askQuestion(prompt)"
+                                            class="flex-shrink-0 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-200 transition hover:border-zesco-300 hover:text-zesco-700 dark:hover:border-zesco-500 dark:hover:text-zesco-300 whitespace-nowrap">
+                                        {{ prompt }}
+                                    </button>
+                                </div>
+
+                                <button type="button" @click="scrollPrompts(200)"
+                                        class="hidden md:flex flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition">
+                                    <ChevronRightIcon class="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Input -->
+                        <div class="w-full">
+                            <form @submit.prevent="submitQuery"
+                                  class="rounded-[28px] border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm">
+                                <div class="px-4 pt-3">
+                                    <textarea
+                                        ref="queryInputRef"
+                                        v-model="queryInput"
+                                        :disabled="queryLoading || !aiAvailable"
+                                        rows="1"
+                                        placeholder="Ask about KPIs, performance, trends..."
+                                        class="w-full border-0 bg-transparent px-0 py-1 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-0 resize-none overflow-hidden leading-5"
+                                        @input="resizeQueryInput"
+                                        @keydown.enter.exact.prevent="submitQuery"
+                                        @keydown.enter.shift.exact.stop
+                                    />
+                                </div>
+                                <div class="flex items-center justify-end px-3 pb-3 pt-2">
+                                    <button
+                                        type="submit"
+                                        :disabled="queryLoading || !queryInput.trim() || !aiAvailable"
+                                        class="w-9 h-9 rounded-full flex items-center justify-center transition disabled:opacity-30 disabled:cursor-not-allowed bg-zesco-500 hover:bg-zesco-600 text-white shadow-sm"
+                                        title="Send"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+
+            <!-- Sidebar: Executive Summary (desktop only) -->
+            <div class="hidden lg:block w-[380px] flex-shrink-0 sticky top-6">
+                <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+                    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <SparklesIcon class="w-4 h-4 text-zesco-500" />
+                            Executive Summary
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <span v-if="insights?.generated_at" class="text-[10px] text-gray-400">{{ formatTime(insights.generated_at) }}</span>
+                            <button @click="loadInsights(true)" :disabled="insightsLoading"
+                                    class="p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition"
+                                    title="Refresh insights">
+                                <ArrowPathIcon :class="['w-3.5 h-3.5', insightsLoading && 'animate-spin']" />
+                            </button>
+                        </div>
+                    </div>
+                    <div class="px-5 py-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+                        <InsightsSummaryContent :insights="insights" :insights-loading="insightsLoading" :elapsed-insights="elapsedInsights" :ai-available="aiAvailable" :error="insightsError" @generate="loadInsights()" />
                     </div>
                 </div>
-
-                <!-- Quick Prompts (when no history) -->
-                <div v-if="!chatHistory.length && !queryLoading" class="flex flex-wrap gap-2">
-                    <button v-for="prompt in quickPrompts" :key="prompt" @click="askQuestion(prompt)"
-                            class="text-xs px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        {{ prompt }}
-                    </button>
-                </div>
-
-                <!-- Input -->
-                <form @submit.prevent="submitQuery" class="flex gap-2">
-                    <input v-model="queryInput" type="text" placeholder="Ask about KPIs, performance, trends..."
-                           class="input-field flex-1 text-sm" :disabled="queryLoading || !aiAvailable" />
-                    <Button type="submit" :disabled="queryLoading || !queryInput.trim() || !aiAvailable" :loading="queryLoading" variant="primary" size="md">
-                        <span v-if="!queryLoading">Send</span>
-                    </Button>
-                </form>
             </div>
-        </Card>
-
-        <!-- Executive AI Insights -->
-        <Card title="Executive AI Summary" class="mb-6">
-            <template #actions>
-                <div class="flex items-center gap-2">
-                    <span v-if="insights?.generated_at" class="text-xs text-gray-400">{{ formatTime(insights.generated_at) }}</span>
-                    <button @click="loadInsights(true)" :disabled="insightsLoading"
-                            class="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1">
-                        <svg :class="['w-3.5 h-3.5', insightsLoading && 'animate-spin']" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
-                        </svg>
-                        Refresh
-                    </button>
-                </div>
-            </template>
-
-            <div v-if="insightsLoading && !insights" class="flex items-center justify-center py-12">
-                <div class="text-center">
-                    <svg class="w-8 h-8 animate-spin mx-auto mb-3 text-gray-400" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <p class="text-sm text-gray-500">Generating AI insights<span v-if="elapsedInsights"> ({{ elapsedInsights }}s)</span>...</p>
-                    <p class="text-xs text-gray-400 mt-1">Large models can take a few minutes</p>
-                </div>
-            </div>
-
-            <div v-else-if="insights" class="space-y-5">
-                <!-- Summary -->
-                <div>
-                    <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{{ insights.summary }}</p>
-                </div>
-
-                <!-- Key Concerns -->
-                <div v-if="insights.key_concerns?.length">
-                    <h4 class="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider mb-2">Key Concerns</h4>
-                    <ul class="space-y-1">
-                        <li v-for="c in insights.key_concerns" :key="c" class="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
-                            <span class="text-red-400 mt-0.5">•</span> {{ c }}
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Positive Highlights -->
-                <div v-if="insights.positive_highlights?.length">
-                    <h4 class="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider mb-2">Positive Highlights</h4>
-                    <ul class="space-y-1">
-                        <li v-for="h in insights.positive_highlights" :key="h" class="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
-                            <span class="text-green-400 mt-0.5">•</span> {{ h }}
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Recommendations -->
-                <div v-if="insights.recommendations?.length">
-                    <h4 class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-2">Recommendations</h4>
-                    <ul class="space-y-1">
-                        <li v-for="r in insights.recommendations" :key="r" class="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
-                            <span class="text-blue-400 mt-0.5">→</span> {{ r }}
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Outlook -->
-                <div v-if="insights.outlook" class="pt-3 border-t border-gray-100 dark:border-gray-700">
-                    <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Outlook</h4>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 italic">{{ insights.outlook }}</p>
-                </div>
-            </div>
-
-            <div v-else class="text-center py-8">
-                <p class="text-sm text-gray-400 mb-3">No insights generated yet.</p>
-                <Button @click="loadInsights()" :disabled="!aiAvailable" variant="primary" size="md">Generate Insights</Button>
-            </div>
-        </Card>
+        </div>
 
     </AppLayout>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, nextTick, onMounted, onUnmounted } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import Card from '@/Components/UI/Card.vue';
 import Button from '@/Components/UI/Button.vue';
+import InsightsSummaryContent from '@/Components/AI/InsightsSummaryContent.vue';
+import AiChart from '@/Components/AI/AiChart.vue';
+import { ChatBubbleOvalLeftEllipsisIcon, SparklesIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from '@heroicons/vue/20/solid';
 
 const props = defineProps({
     directorates: { type: Array, default: () => [] },
@@ -187,6 +218,9 @@ const props = defineProps({
 });
 
 const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
+
+// ── UI state ────────────────────────────────────────────
+const summaryOpen = ref(false);
 
 // ── Elapsed-time counters ───────────────────────────────
 const elapsedQuery = ref(0);
@@ -280,8 +314,21 @@ async function aiPost(url, body = {}) {
 
 // ── Chat ────────────────────────────────────────────────
 const queryInput = ref('');
+const queryInputRef = ref(null);
+const promptsContainer = ref(null);
 const queryLoading = ref(false);
 const chatHistory = ref([]);
+
+function resizeQueryInput() {
+    const el = queryInputRef.value;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function scrollPrompts(offset) {
+    promptsContainer.value?.scrollBy({ left: offset, behavior: 'smooth' });
+}
 
 const quickPrompts = [
     'Summarize this quarter\'s performance',
@@ -318,6 +365,7 @@ async function submitQuery() {
                 content: result.answer || 'I couldn\'t generate an answer.',
                 dataPoints: result.data_points || [],
                 suggestions: result.follow_up_suggestions || [],
+                charts: result.charts || [],
             });
         } else {
             chatHistory.value.push({ role: 'assistant', content: data.message || 'Sorry, I couldn\'t process that request.' });
@@ -337,22 +385,24 @@ function clearChat() {
 // ── Executive Insights ──────────────────────────────────
 const insights = ref(null);
 const insightsLoading = ref(false);
+const insightsError = ref('');
 
 async function loadInsights(fresh = false) {
     insightsLoading.value = true;
+    insightsError.value = '';
     insightsTimer = startTimer(elapsedInsights);
 
     try {
         const data = await aiPost('/api/ai/executive-insights', { fresh });
 
-        // Async result is the raw insights object; sync is wrapped in { success, insights }
-        if (data.insights) {
-            insights.value = data.insights;
-        } else if (data.summary) {
-            // Async returns raw AI object directly
-            insights.value = data;
+        // Sync response: { success, insights: {...} }. Async response: raw AI object.
+        const parsed = data.insights ?? data;
+        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+            insights.value = parsed;
         }
     } catch (e) {
+        insights.value = null;
+        insightsError.value = e?.message || 'Failed to load insights.';
         console.error('Failed to load insights', e);
     } finally {
         insightsTimer = stopTimer(insightsTimer, elapsedInsights);
@@ -377,3 +427,13 @@ onUnmounted(() => {
     if (insightsTimer) clearInterval(insightsTimer);
 });
 </script>
+
+<style scoped>
+.prompts-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.prompts-scroll::-webkit-scrollbar {
+    display: none;
+}
+</style>
