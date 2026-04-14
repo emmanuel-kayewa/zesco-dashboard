@@ -8,6 +8,8 @@ use App\Services\AiAnalysisService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -37,13 +39,20 @@ class AiInsightsController extends Controller
     {
         $taskId = Str::uuid()->toString();
 
-        // Seed the cache entry so the poll endpoint finds it immediately
-        Cache::put("ai_task:{$taskId}", [
-            'status' => 'queued',
-            'queued_at' => now()->toISOString(),
-        ], now()->addMinutes(30));
+        try {
+            // Seed the cache entry so the poll endpoint finds it immediately
+            Cache::put("ai_task:{$taskId}", [
+                'status' => 'queued',
+                'queued_at' => now()->toISOString(),
+            ], now()->addMinutes(30));
 
-        ProcessAiRequest::dispatch($taskId, $method, $params);
+            // Dispatch to the configured queue connection (often 'database')
+            ProcessAiRequest::dispatch($taskId, $method, $params);
+        } catch (\Throwable $e) {
+            // Avoid leaving a stuck task entry behind
+            Cache::forget("ai_task:{$taskId}");
+            throw $e;
+        }
 
         return response()->json([
             'async' => true,
@@ -79,7 +88,23 @@ class AiInsightsController extends Controller
      */
     private function shouldAsync(): bool
     {
-        return config('queue.default') !== 'sync';
+        $driver = config('queue.default');
+
+        if ($driver === 'sync') {
+            return false;
+        }
+
+        // If using the database queue but migrations haven't been run,
+        // dispatching will fail (missing `jobs` table). Fall back to sync.
+        if ($driver === 'database') {
+            try {
+                return Schema::hasTable('jobs');
+            } catch (\Throwable) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -113,14 +138,22 @@ class AiInsightsController extends Controller
         if (!$aiService->isAvailable()) {
             return response()->json([
                 'success' => false,
-                'message' => 'AI service unavailable. Ensure Ollama is running.',
+                'message' => 'AI service unavailable. Check your AI provider configuration.',
             ], 503);
         }
 
         $fresh = $request->boolean('fresh', false);
 
         if ($this->shouldAsync()) {
-            return $this->dispatchAiTask('executiveInsights', ['fresh' => $fresh]);
+            try {
+                return $this->dispatchAiTask('executiveInsights', ['fresh' => $fresh]);
+            } catch (\Throwable $e) {
+                Log::warning('AI async dispatch failed; falling back to sync', [
+                    'method' => 'executiveInsights',
+                    'error' => $e->getMessage(),
+                ]);
+                // fall through to sync
+            }
         }
 
         // Synchronous fallback — extend PHP time limit
@@ -157,7 +190,14 @@ class AiInsightsController extends Controller
         }
 
         if ($this->shouldAsync()) {
-            return $this->dispatchAiTask('explainAnomaly', $request->only('kpi_id', 'directorate_id'));
+            try {
+                return $this->dispatchAiTask('explainAnomaly', $request->only('kpi_id', 'directorate_id'));
+            } catch (\Throwable $e) {
+                Log::warning('AI async dispatch failed; falling back to sync', [
+                    'method' => 'explainAnomaly',
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         set_time_limit(0);
@@ -192,7 +232,14 @@ class AiInsightsController extends Controller
         }
 
         if ($this->shouldAsync()) {
-            return $this->dispatchAiTask('recommendations', $request->only('directorate_id'));
+            try {
+                return $this->dispatchAiTask('recommendations', $request->only('directorate_id'));
+            } catch (\Throwable $e) {
+                Log::warning('AI async dispatch failed; falling back to sync', [
+                    'method' => 'recommendations',
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         set_time_limit(0);
@@ -227,7 +274,14 @@ class AiInsightsController extends Controller
         }
 
         if ($this->shouldAsync()) {
-            return $this->dispatchAiTask('query', ['question' => $request->question]);
+            try {
+                return $this->dispatchAiTask('query', ['question' => $request->question]);
+            } catch (\Throwable $e) {
+                Log::warning('AI async dispatch failed; falling back to sync', [
+                    'method' => 'query',
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         set_time_limit(0);
@@ -277,11 +331,18 @@ class AiInsightsController extends Controller
         $history = $request->input('history', []);
 
         if ($this->shouldAsync()) {
-            return $this->dispatchAiTask('ppQuery', [
-                'scope' => $scope,
-                'question' => $question,
-                'history' => $history,
-            ]);
+            try {
+                return $this->dispatchAiTask('ppQuery', [
+                    'scope' => $scope,
+                    'question' => $question,
+                    'history' => $history,
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning('AI async dispatch failed; falling back to sync', [
+                    'method' => 'ppQuery',
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         set_time_limit(0);
@@ -317,7 +378,14 @@ class AiInsightsController extends Controller
         }
 
         if ($this->shouldAsync()) {
-            return $this->dispatchAiTask('predictBreach', $request->only('kpi_id', 'directorate_id'));
+            try {
+                return $this->dispatchAiTask('predictBreach', $request->only('kpi_id', 'directorate_id'));
+            } catch (\Throwable $e) {
+                Log::warning('AI async dispatch failed; falling back to sync', [
+                    'method' => 'predictBreach',
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         set_time_limit(0);
