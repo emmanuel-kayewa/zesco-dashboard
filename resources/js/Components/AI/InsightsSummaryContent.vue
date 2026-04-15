@@ -10,7 +10,7 @@
     </div>
 
     <!-- Loading -->
-    <div v-if="insightsLoading && !insights" class="flex items-center justify-center py-12">
+    <div v-if="insightsLoading && !insights" class="flex-1 flex items-center justify-center">
         <div class="text-center">
             <div class="flex justify-center gap-1 mb-3">
                 <span class="w-1.5 h-1.5 rounded-full bg-zesco-400 animate-bounce" style="animation-delay: 0ms" />
@@ -67,12 +67,14 @@
     </div>
 
     <!-- Empty -->
-    <div v-else class="text-center py-8">
+    <div v-else class="flex-1 flex items-center justify-center">
+    <div class="text-center">
         <p class="text-sm text-gray-400 mb-3">No insights generated yet.</p>
         <button @click="$emit('generate')" :disabled="!aiAvailable"
                 class="inline-flex items-center gap-2 rounded-lg bg-zesco-500 px-4 py-2 text-sm font-medium text-white hover:bg-zesco-600 transition disabled:opacity-50">
             Generate Insights
         </button>
+    </div>
     </div>
 </template>
 
