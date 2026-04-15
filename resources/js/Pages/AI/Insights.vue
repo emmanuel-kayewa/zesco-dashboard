@@ -95,8 +95,8 @@
           </template>
           <div
             :class="[
-              'space-y-4 min-h-[calc(100vh-232px)] flex flex-col',
-              !chatHistory.length && !queryLoading && 'justify-center',
+              'space-y-4 flex flex-col lg:min-h-[calc(100vh-232px)]',
+              !chatHistory.length && !queryLoading && 'lg:justify-center',
             ]"
           >
             <!-- Chat History -->
@@ -209,43 +209,65 @@
               </div>
             </div>
 
-            <!-- Quick Prompts -->
-            <div v-if="!chatHistory.length && !queryLoading">
-              <div class="relative flex items-center">
-                <button
-                  type="button"
-                  @click="scrollPrompts(-200)"
-                  class="hidden md:flex flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition"
-                >
-                  <ChevronLeftIcon class="w-4 h-4" />
-                </button>
+            <!-- Empty state: Logo + Header + Pills + Input -->
+            <div v-if="!chatHistory.length && !queryLoading" class="flex flex-col items-center gap-6 w-full">
+              <!-- Zesco Logo -->
+              <div>
+                <img src="/images/zesco_black_logo.svg" alt="ZESCO" class="h-20 w-auto dark:hidden" />
+                <img src="/images/zesco_white_logo.svg" alt="ZESCO" class="h-20 w-auto hidden dark:block" />
+              </div>
 
-                <div
-                  ref="promptsContainer"
-                  class="flex gap-2 overflow-x-auto scroll-smooth flex-1 px-1 py-0.5 prompts-scroll"
-                >
+              <!-- Welcome Header -->
+              <div class="text-center">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                  What would you like to know?
+                </h2>
+                <p class="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                  Ask me anything about KPIs, performance, and trends
+                </p>
+              </div>
+
+              <!-- Quick Prompts -->
+              <div class="w-full">
+                <div class="relative flex items-center">
                   <button
-                    v-for="prompt in quickPrompts"
-                    :key="prompt"
-                    @click="askQuestion(prompt)"
-                    class="flex-shrink-0 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-200 transition hover:border-zesco-300 hover:text-zesco-700 dark:hover:border-zesco-500 dark:hover:text-zesco-300 whitespace-nowrap"
+                    v-show="canScrollLeft"
+                    type="button"
+                    @click="scrollPrompts(-200)"
+                    class="hidden md:flex flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition"
                   >
-                    {{ prompt }}
+                    <ChevronLeftIcon class="w-4 h-4" />
+                  </button>
+
+                  <div
+                    ref="promptsContainer"
+                    class="flex gap-2 overflow-x-auto scroll-smooth flex-1 px-1 py-0.5 prompts-scroll"
+                    @scroll="updateScrollState"
+                  >
+                    <button
+                      v-for="prompt in quickPrompts"
+                      :key="prompt"
+                      @click="askQuestion(prompt)"
+                      class="flex-shrink-0 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-200 transition hover:border-zesco-300 hover:text-zesco-700 dark:hover:border-zesco-500 dark:hover:text-zesco-300 whitespace-nowrap"
+                    >
+                      {{ prompt }}
+                    </button>
+                  </div>
+
+                  <button
+                    v-show="canScrollRight"
+                    type="button"
+                    @click="scrollPrompts(200)"
+                    class="hidden md:flex flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition"
+                  >
+                    <ChevronRightIcon class="w-4 h-4" />
                   </button>
                 </div>
-
-                <button
-                  type="button"
-                  @click="scrollPrompts(200)"
-                  class="hidden md:flex flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition"
-                >
-                  <ChevronRightIcon class="w-4 h-4" />
-                </button>
               </div>
             </div>
 
             <!-- Input -->
-            <div class="w-full mt-auto">
+            <div :class="['w-full', chatHistory.length && 'mt-auto']">
               <form
                 @submit.prevent="submitQuery"
                 class="rounded-[28px] border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm"
@@ -492,6 +514,16 @@ function resizeQueryInput() {
   el.style.height = Math.min(el.scrollHeight, 120) + "px";
 }
 
+const canScrollLeft = ref(false);
+const canScrollRight = ref(true);
+
+function updateScrollState() {
+  const el = promptsContainer.value;
+  if (!el) return;
+  canScrollLeft.value = el.scrollLeft > 0;
+  canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+}
+
 function scrollPrompts(offset) {
   promptsContainer.value?.scrollBy({ left: offset, behavior: "smooth" });
 }
@@ -596,6 +628,7 @@ onMounted(() => {
   if (props.aiAvailable) {
     loadInsights();
   }
+  nextTick(() => updateScrollState());
 });
 
 onUnmounted(() => {
