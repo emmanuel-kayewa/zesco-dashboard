@@ -20,14 +20,24 @@ class OpenAiProvider implements AiProviderInterface
         $this->timeout = config('dashboard.ai.openai.timeout', 60);
     }
 
+    /**
+     * Build a base HTTP client with common options (IPv4, timeouts, auth).
+     */
+    private function http(int $timeout = null): \Illuminate\Http\Client\PendingRequest
+    {
+        return Http::connectTimeout(30)
+            ->timeout($timeout ?? $this->timeout)
+            ->withOptions(['force_ip_resolve' => 'v4'])
+            ->withHeaders([
+                'Authorization' => "Bearer {$this->apiKey}",
+                'Content-Type' => 'application/json',
+            ]);
+    }
+
     public function chat(string $systemPrompt, string $userPrompt, array $options = []): string
     {
         try {
-            $response = Http::timeout($this->timeout)
-                ->withHeaders([
-                    'Authorization' => "Bearer {$this->apiKey}",
-                    'Content-Type' => 'application/json',
-                ])
+            $response = $this->http()
                 ->post("{$this->baseUrl}/chat/completions", [
                     'model' => $options['model'] ?? $this->model,
                     'messages' => [
@@ -57,11 +67,7 @@ class OpenAiProvider implements AiProviderInterface
     public function chatWithJson(string $systemPrompt, string $userPrompt, array $options = []): array
     {
         try {
-            $response = Http::timeout($this->timeout)
-                ->withHeaders([
-                    'Authorization' => "Bearer {$this->apiKey}",
-                    'Content-Type' => 'application/json',
-                ])
+            $response = $this->http()
                 ->post("{$this->baseUrl}/chat/completions", [
                     'model' => $options['model'] ?? $this->model,
                     'messages' => [
@@ -98,9 +104,7 @@ class OpenAiProvider implements AiProviderInterface
         }
 
         try {
-            $response = Http::timeout(10)
-                ->withHeaders(['Authorization' => "Bearer {$this->apiKey}"])
-                ->get("{$this->baseUrl}/models");
+            $response = $this->http(30)->get("{$this->baseUrl}/models");
             return $response->successful();
         } catch (\Exception) {
             return false;
