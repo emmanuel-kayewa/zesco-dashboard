@@ -54,9 +54,9 @@
                     <template #actions>
                         <button @click="clearChat" class="text-xs text-gray-400 hover:text-gray-600" v-if="chatHistory.length">Clear</button>
                     </template>
-                    <div class="space-y-4">
+                    <div :class="['space-y-4 min-h-[calc(100vh-232px)] flex flex-col', !chatHistory.length && !queryLoading && 'justify-center']">
                         <!-- Chat History -->
-                        <div v-if="chatHistory.length" class="max-h-[500px] overflow-y-auto pr-2">
+                        <div v-if="chatHistory.length" class="max-h-[500px] overflow-y-auto pr-2 flex-1">
                             <div class="w-full space-y-8 py-2">
                                 <div v-for="(msg, idx) in chatHistory" :key="idx">
                                     <!-- User message -->
@@ -137,7 +137,7 @@
                         </div>
 
                         <!-- Input -->
-                        <div class="w-full">
+                        <div class="w-full mt-auto">
                             <form @submit.prevent="submitQuery"
                                   class="rounded-[28px] border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm">
                                 <div class="px-4 pt-3">
@@ -188,7 +188,7 @@
                             </button>
                         </div>
                     </div>
-                    <div class="px-5 py-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+                    <div class="px-5 py-4 min-h-[calc(100vh-200px)] max-h-[calc(100vh-200px)] overflow-y-auto flex flex-col">
                         <InsightsSummaryContent :insights="insights" :insights-loading="insightsLoading" :elapsed-insights="elapsedInsights" :ai-available="aiAvailable" :error="insightsError" @generate="loadInsights()" />
                     </div>
                 </div>
