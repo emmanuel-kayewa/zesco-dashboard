@@ -243,7 +243,7 @@
             :error="form.errors.project_name"
           />
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-3 mb-3">
           <Select
             v-model="form.sector"
             :options="sectorOptions"
@@ -265,7 +265,7 @@
             :error="form.errors.project_stage"
           />
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 mb-3">
           <Select
             v-model="form.status"
             :options="healthStatusOptions"
@@ -278,16 +278,21 @@
             placeholder="e.g. Renewables"
             :error="form.errors.programme"
           />
-          <Input
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3">
+          <Select
             v-model="form.province"
+            :options="provinceOptions"
             label="Province"
+            placeholder="Select Province"
             :error="form.errors.province"
           />
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <Input
+          <Select
             v-model="form.district"
+            :options="districtOptions"
             label="District"
+            placeholder="Select District"
+            :disabled="!form.province"
             :error="form.errors.district"
           />
         </div>
@@ -584,7 +589,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { useForm, router } from "@inertiajs/vue3";
 import Card from "@/Components/UI/Card.vue";
 import DataTable from "@/Components/UI/DataTable.vue";
@@ -683,6 +688,21 @@ const boolOptions = [
   { value: "0", label: "No" },
 ];
 
+const provinceDistrictMap = {
+  Central: ["Chibombo", "Chisamba", "Chitambo", "Kabwe", "Kapiri Mposhi", "Luano", "Mkushi", "Mumbwa", "Ngabwe", "Serenje", "Shibuyunji"],
+  Copperbelt: ["Chililabombwe", "Chingola", "Kalulushi", "Kitwe", "Luanshya", "Lufwanyama", "Masaiti", "Mpongwe", "Mufulira", "Ndola"],
+  Eastern: ["Chadiza", "Chama", "Chipangali", "Chipata", "Kasenengwa", "Katete", "Lumezi", "Lundazi", "Lusangazi", "Mambwe", "Nyimba", "Petauke", "Sinda", "Vubwi"],
+  Luapula: ["Chembe", "Chienge", "Chipili", "Kawambwa", "Lunga", "Mansa", "Milenge", "Mwansabombwe", "Mwense", "Nchelenge", "Samfya"],
+  Lusaka: ["Chilanga", "Chirundu", "Chongwe", "Kafue", "Luangwa", "Lusaka", "Rufunsa"],
+  Muchinga: ["Chinsali", "Isoka", "Kanchibiya", "Lavushimanda", "Mafinga", "Mpika", "Nakonde", "Shiwangandu"],
+  Northern: ["Chilubi", "Kaputa", "Kasama", "Luwingu", "Mbala", "Mporokoso", "Mpulungu", "Mungwi", "Nsama", "Senga Hill"],
+  "North-Western": ["Chavuma", "Ikelenge", "Kabompo", "Kalumbila", "Kasempa", "Manyinga", "Mufumbwe", "Mushindamo", "Mwinilunga", "Solwezi", "Zambezi"],
+  Southern: ["Batoka", "Chikankata", "Choma", "Gwembe", "Itezhi-Tezhi", "Kalomo", "Kazungula", "Livingstone", "Mapatizya", "Mazabuka", "Monze", "Namwala", "Pemba", "Sinazongwe", "Siavonga", "Zimba"],
+  Western: ["Kalabo", "Kaoma", "Limulunga", "Luampa", "Lukulu", "Mitete", "Mongu", "Mulobezi", "Mwandi", "Nalolo", "Nkeyema", "Senanga", "Sesheke", "Shangombo", "Sikongo", "Sioma"],
+};
+
+const provinceOptions = Object.keys(provinceDistrictMap).map((p) => ({ value: p, label: p }));
+
 const form = useForm({
   project_code: "",
   project_name: "",
@@ -730,6 +750,16 @@ const form = useForm({
   actual_spend: null,
   forecast_at_completion: null,
   next_decision: "",
+});
+
+const districtOptions = computed(() => {
+  const province = form.province;
+  if (!province || !provinceDistrictMap[province]) return [];
+  return provinceDistrictMap[province].map((d) => ({ value: d, label: d }));
+});
+
+watch(() => form.province, (newVal, oldVal) => {
+  if (oldVal && newVal !== oldVal) form.district = "";
 });
 
 function applyFilters() {
