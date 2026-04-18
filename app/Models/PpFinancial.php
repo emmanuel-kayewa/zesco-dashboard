@@ -29,14 +29,8 @@ class PpFinancial extends Model
     {
         static::creating(function (self $financial) {
             if (empty($financial->finance_code)) {
-                $driver = $financial->getConnection()->getDriverName();
-                $orderBy = $driver === 'oracle'
-                    ? "TO_NUMBER(SUBSTR(finance_code, 5)) DESC"
-                    : "CAST(SUBSTRING(finance_code, 5) AS UNSIGNED) DESC";
-
                 $last = static::where('finance_code', 'like', 'FIN-%')
-                    ->orderByRaw($orderBy)
-                    ->value('finance_code');
+                    ->max('finance_code');
 
                 $next = $last ? ((int) substr($last, 4)) + 1 : 1;
                 $financial->finance_code = 'FIN-' . str_pad($next, 4, '0', STR_PAD_LEFT);
