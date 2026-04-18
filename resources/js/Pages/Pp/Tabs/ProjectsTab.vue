@@ -31,6 +31,13 @@
             v-if="showFilters"
             class="absolute left-0 top-full mt-1 w-56 sm:w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 space-y-3 z-50"
           >
+            <Input
+              v-model="searchQuery"
+              icon="search"
+              placeholder="Search projects…"
+              size="sm"
+              class="w-full"
+            />
             <div>
               <label
                 class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
@@ -78,7 +85,14 @@
           </div>
         </div>
 
-        <!-- Desktop: Inline filters -->
+        <!-- Desktop: Search + Inline filters -->
+        <Input
+          v-model="searchQuery"
+          icon="search"
+          placeholder="Search projects…"
+          size="md"
+          class="w-48 hidden md:block"
+        />
         <Select
           v-model="sectorFilter"
           :options="[
@@ -424,7 +438,7 @@
 
       <!-- Financial -->
       <div v-show="activeFormTab === 'financial'">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3">
           <Input
             v-model="form.cost_usd"
             type="number"
@@ -434,27 +448,7 @@
             label-class="truncate"
             :error="form.errors.cost_usd"
           />
-          <Input
-            v-model="form.cost_zmw"
-            type="number"
-            step="0.01"
-            min="0"
-            label="Cost (ZMW)"
-            label-class="truncate"
-            :error="form.errors.cost_zmw"
-          />
-          <Input
-            v-model="form.approved_budget"
-            type="number"
-            step="0.01"
-            min="0"
-            label="Approved Budget"
-            label-class="truncate"
-            :error="form.errors.approved_budget"
-          />
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <Input
+          <!-- <Input
             v-model="form.committed_cost"
             type="number"
             step="0.01"
@@ -462,7 +456,7 @@
             label="Committed Cost"
             label-class="truncate"
             :error="form.errors.committed_cost"
-          />
+          /> -->
           <Input
             v-model="form.actual_spend"
             type="number"
@@ -471,15 +465,6 @@
             label="Actual Spend"
             label-class="truncate"
             :error="form.errors.actual_spend"
-          />
-          <Input
-            v-model="form.forecast_at_completion"
-            type="number"
-            step="0.01"
-            min="0"
-            label="Forecast at Completion"
-            label-class="truncate"
-            :error="form.errors.forecast_at_completion"
           />
         </div>
       </div>
@@ -623,7 +608,9 @@ const props = defineProps({
 
 const sectorFilter = ref(props.filters?.sector || "");
 const statusFilter = ref(props.filters?.status || "");
+const searchQuery = ref(props.filters?.search || "");
 const showFilters = ref(false);
+let searchTimeout = null;
 const showImport = ref(false);
 const activeFormTab = ref("info");
 
@@ -648,6 +635,11 @@ onUnmounted(() => {
 watch([sectorFilter, statusFilter], () => {
   applyFilters();
   showFilters.value = false;
+});
+
+watch(searchQuery, () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => applyFilters(), 300);
 });
 
 const showModal = ref(false);
@@ -742,6 +734,7 @@ const form = useForm({
 
 function applyFilters() {
   const params = {};
+  if (searchQuery.value) params.search = searchQuery.value;
   if (sectorFilter.value) params.sector = sectorFilter.value;
   if (statusFilter.value) params.project_stage = statusFilter.value;
   router.get("/pp/projects", params, {
