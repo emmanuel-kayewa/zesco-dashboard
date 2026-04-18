@@ -57,13 +57,20 @@ class PpProjectController extends Controller
         if ($request->filled('lifecycle_phase')) {
             $query->where('lifecycle_phase', $request->input('lifecycle_phase'));
         }
+        if ($request->filled('search')) {
+            $term = $request->input('search');
+            $query->where(function ($q) use ($term) {
+                $q->where('project_name', 'like', "%{$term}%")
+                  ->orWhere('project_code', 'like', "%{$term}%");
+            });
+        }
 
         $projects = $query->paginate(30)->withQueryString();
 
         return Inertia::render('Pp/Index', [
             'activeTab' => 'projects',
             'projects'  => $projects,
-            'filters'   => $request->only(['sector', 'project_stage', 'status', 'lifecycle_phase']),
+            'filters'   => $request->only(['sector', 'project_stage', 'status', 'lifecycle_phase', 'search']),
         ]);
     }
 
