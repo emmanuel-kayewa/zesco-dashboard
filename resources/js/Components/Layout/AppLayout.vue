@@ -744,12 +744,11 @@ const notificationsLoading = ref(false);
 const notifications = ref([]);
 const unreadCount = ref(0);
 
-function csrfToken() {
-  return (
-    document
-      .querySelector('meta[name="csrf-token"]')
-      ?.getAttribute("content") || ""
-  );
+function csrfHeaders() {
+  const cookie = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+  if (cookie) return { 'X-XSRF-TOKEN': decodeURIComponent(cookie[1]) };
+  const meta = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  return meta ? { 'X-CSRF-TOKEN': meta } : {};
 }
 
 async function fetchUnreadAlerts() {
@@ -787,7 +786,7 @@ async function markAlertRead(alertId) {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        "X-CSRF-TOKEN": csrfToken(),
+        ...csrfHeaders(),
       },
       body: JSON.stringify({}),
     });
@@ -803,7 +802,7 @@ async function dismissAlert(alertId) {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        "X-CSRF-TOKEN": csrfToken(),
+        ...csrfHeaders(),
       },
       body: JSON.stringify({}),
     });
