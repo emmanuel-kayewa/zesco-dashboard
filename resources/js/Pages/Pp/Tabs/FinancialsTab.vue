@@ -37,7 +37,8 @@
 
     <DataTable
       :columns="[
-        { key: 'code', label: 'Code' },
+        { key: 'code', label: 'Finance ID', class: 'text-nowrap' },
+        { key: 'contract', label: 'Contract ID', class: 'text-nowrap' },
         { key: 'project', label: 'Project' },
         { key: 'date', label: 'As-Of Date' },
         { key: 'committed', label: 'Committed', align: 'right' },
@@ -58,6 +59,9 @@
       <template #default="{ row: f }">
         <td class="py-2 px-3 font-mono text-xs text-gray-500">
           {{ f.finance_code }}
+        </td>
+        <td class="py-2 px-3 text-gray-500">
+          {{ f.contract_id || "—" }}
         </td>
         <td class="py-2 px-3 text-gray-700 dark:text-gray-200">
           {{ f.project ? `${f.project.project_code}` : "—" }}
@@ -103,7 +107,7 @@
           v-if="financials.data?.length"
           class="border-t-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/30 font-semibold"
         >
-          <td colspan="3" class="py-2 px-3 text-gray-700 dark:text-gray-200">
+          <td colspan="4" class="py-2 px-3 text-gray-700 dark:text-gray-200">
             Totals (this page)
           </td>
           <td class="text-right py-2 px-3 text-gray-700 dark:text-gray-200">
@@ -126,17 +130,18 @@
   >
     <form @submit.prevent="submitEntry" class="space-y-4">
       <Input
-        v-model="form.finance_code"
-        label="Finance Code"
-        placeholder="e.g. FIN-GEN-001-USD"
-        required
-        :error="form.errors.finance_code"
+        v-model="form.contract_id"
+        label="Contract ID"
+        placeholder="e.g. CON-2026-001"
+        :error="form.errors.contract_id"
       />
       <Select
         v-model="form.pp_project_id"
         :options="projectOptions"
-        label="Project (optional)"
-        placeholder="Portfolio-level if blank"
+        label="Project"
+        placeholder="Select a project"
+        searchable
+        required
         :error="form.errors.pp_project_id"
       />
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -247,13 +252,12 @@ const showModal = ref(false);
 const showImport = ref(false);
 const editingId = ref(null);
 
-const projectOptions = computed(() => [
-  { value: "", label: "— Portfolio Level —" },
-  ...props.ppProjects.map((p) => ({
+const projectOptions = computed(() =>
+  props.ppProjects.map((p) => ({
     value: p.id,
     label: `${p.project_code} — ${p.project_name}`,
   })),
-]);
+);
 
 const totalCommitted = computed(
   () =>
@@ -271,7 +275,7 @@ const totalPaid = computed(
 );
 
 const form = useForm({
-  finance_code: "",
+  contract_id: "",
   pp_project_id: "",
   as_of_date: new Date().toISOString().slice(0, 10),
   committed_amount: null,
@@ -322,7 +326,7 @@ function submitEntry() {
 
 function editEntry(f) {
   editingId.value = f.id;
-  form.finance_code = f.finance_code;
+  form.contract_id = f.contract_id || "";
   form.pp_project_id = f.pp_project_id || "";
   form.as_of_date = f.as_of_date || "";
   form.committed_amount = f.committed_amount;
