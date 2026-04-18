@@ -300,7 +300,7 @@
 
       <!-- Classification (REMs) -->
       <div v-show="activeFormTab === 'classification'">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-3 mb-3">
           <Input
             v-model="form.energy_type"
             label="Energy Type"
@@ -320,7 +320,7 @@
             :error="form.errors.market_segment"
           />
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-3 mb-3">
           <Input
             v-model="form.ownership_model"
             label="Ownership Model"
@@ -339,7 +339,7 @@
             :error="form.errors.owner_entity"
           />
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-3">
           <Select
             v-model="form.is_ipp"
             :options="boolOptions"
@@ -376,7 +376,7 @@
 
       <!-- People & Schedule -->
       <div v-show="activeFormTab === 'schedule'">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-3 mb-3">
           <Input
             v-model="form.contractor"
             label="Contractor"
@@ -419,7 +419,7 @@
             :error="form.errors.cod_planned"
           />
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-3">
           <DatePicker
             v-model="form.cod_actual"
             label="COD Actual"
@@ -476,7 +476,7 @@
 
       <!-- Capacity & Status -->
       <div v-show="activeFormTab === 'capacity'">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-3 mb-3">
           <Input
             v-model="form.capacity_mw"
             type="number"
@@ -505,7 +505,7 @@
             :error="form.errors.commissioned_mw_to_date"
           />
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3">
           <Input
             v-model="form.commissioned_capacity_mw"
             type="number"
