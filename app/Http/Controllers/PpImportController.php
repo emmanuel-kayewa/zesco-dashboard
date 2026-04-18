@@ -305,21 +305,26 @@ class PpImportController extends Controller
     private function upsertFinancial(array $row): bool
     {
         $code = trim($row['finance_code'] ?? '');
-        if (!$code) return false;
-
         $projectId = $this->resolveProjectIdFromRow($row);
 
-        PpFinancial::updateOrCreate(
-            ['finance_code' => $code],
-            array_filter([
-                'pp_project_id'    => $projectId,
-                'as_of_date'       => $this->cleanDate($row['as_of_date'] ?? null),
-                'committed_amount' => $this->cleanNumeric($row['committed_amount'] ?? null),
-                'paid_to_date'     => $this->cleanNumeric($row['paid_to_date'] ?? null),
-                'currency'         => trim($row['currency'] ?? 'USD'),
-                'notes'            => trim($row['notes'] ?? '') ?: null,
-            ], fn($v) => $v !== null)
-        );
+        $data = array_filter([
+            'pp_project_id'    => $projectId,
+            'contract_id'      => trim($row['contract_id'] ?? '') ?: null,
+            'as_of_date'       => $this->cleanDate($row['as_of_date'] ?? null),
+            'committed_amount' => $this->cleanNumeric($row['committed_amount'] ?? null),
+            'paid_to_date'     => $this->cleanNumeric($row['paid_to_date'] ?? null),
+            'currency'         => trim($row['currency'] ?? 'USD'),
+            'notes'            => trim($row['notes'] ?? '') ?: null,
+        ], fn($v) => $v !== null);
+
+        if ($code) {
+            PpFinancial::updateOrCreate(
+                ['finance_code' => $code],
+                $data
+            );
+        } else {
+            PpFinancial::create($data);
+        }
 
         return true;
     }
