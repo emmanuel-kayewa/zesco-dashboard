@@ -2,6 +2,84 @@
   <Card title="Financials" :hide-title-on-mobile="true">
     <template #actions>
       <div class="flex flex-wrap items-center gap-2">
+        <!-- Mobile: Filter button with dropdown -->
+        <div class="relative md:hidden filter-dropdown-container">
+          <Button
+            variant="secondary"
+            size="sm"
+            @click="showFilters = !showFilters"
+          >
+            <span class="flex items-center">
+              <svg
+                class="w-4 h-4 mr-1.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                />
+              </svg>
+              Filters
+            </span>
+          </Button>
+          <div
+            v-if="showFilters"
+            class="absolute left-0 top-full mt-1 w-56 sm:w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 space-y-3 z-50"
+          >
+            <Input
+              v-model="searchQuery"
+              icon="search"
+              placeholder="Search financials…"
+              title="Search by finance ID, contract ID, project code, or project name"
+              size="sm"
+              class="w-full"
+            />
+            <div>
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
+              <Select
+                v-model="currencyFilter"
+                :options="[
+                  { value: 'USD', label: 'USD' },
+                  { value: 'ZMW', label: 'ZMW' },
+                ]"
+                placeholder="All Currencies"
+                size="sm"
+                class="w-full"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Project</label>
+              <Select
+                v-model="projectFilter"
+                :options="projectFilterOptions"
+                placeholder="All Projects"
+                size="sm"
+                searchable
+                class="w-full"
+              />
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              @click="showFilters = false"
+              class="w-full"
+            >Close</Button>
+          </div>
+        </div>
+
+        <!-- Desktop: Search + Inline filters -->
+        <Input
+          v-model="searchQuery"
+          icon="search"
+          placeholder="Search financials…"
+          title="Search by finance ID, contract ID, project code, or project name"
+          size="md"
+          class="w-48 hidden md:block"
+        />
         <Select
           v-model="currencyFilter"
           :options="[
@@ -10,7 +88,15 @@
           ]"
           placeholder="All Currencies"
           size="md"
-          class="w-20 sm:w-32"
+          class="w-20 sm:w-32 hidden md:block"
+        />
+        <Select
+          v-model="projectFilter"
+          :options="projectFilterOptions"
+          placeholder="All Projects"
+          size="md"
+          searchable
+          class="w-44 hidden md:block"
         />
         <Button variant="secondary" size="sm" @click="showImport = true">
           <svg
@@ -64,7 +150,11 @@
           {{ f.contract_id || "—" }}
         </td>
         <td class="py-2 px-3 text-gray-700 dark:text-gray-200">
-          {{ f.project ? `${f.project.project_code}` : "—" }}
+          <template v-if="f.project">
+            <span class="font-mono text-xs text-gray-500">{{ f.project.project_code }}</span>
+            <span class="block text-sm">{{ f.project.project_name }}</span>
+          </template>
+          <span v-else>—</span>
         </td>
         <td class="py-2 px-3 text-gray-500">{{ f.as_of_date }}</td>
         <td
@@ -224,7 +314,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { useForm, router } from "@inertiajs/vue3";
 import Card from "@/Components/UI/Card.vue";
 import DataTable from "@/Components/UI/DataTable.vue";
@@ -243,9 +333,36 @@ const props = defineProps({
 });
 
 const currencyFilter = ref(props.filters?.currency || "");
+const projectFilter = ref(props.filters?.project_id || "");
+const searchQuery = ref(props.filters?.search || "");
+const showFilters = ref(false);
+let searchTimeout = null;
 
-watch(currencyFilter, () => {
+function handleClickOutside(event) {
+  if (
+    showFilters.value &&
+    !event.target.closest(".filter-dropdown-container")
+  ) {
+    showFilters.value = false;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", handleClickOutside);
+});
+
+watch([currencyFilter, projectFilter], () => {
   applyFilters();
+  showFilters.value = false;
+});
+
+watch(searchQuery, () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => applyFilters(), 300);
 });
 
 const showModal = ref(false);
@@ -253,6 +370,13 @@ const showImport = ref(false);
 const editingId = ref(null);
 
 const projectOptions = computed(() =>
+  props.ppProjects.map((p) => ({
+    value: p.id,
+    label: `${p.project_code} — ${p.project_name}`,
+  })),
+);
+
+const projectFilterOptions = computed(() =>
   props.ppProjects.map((p) => ({
     value: p.id,
     label: `${p.project_code} — ${p.project_name}`,
@@ -286,7 +410,9 @@ const form = useForm({
 
 function applyFilters() {
   const params = {};
+  if (searchQuery.value) params.search = searchQuery.value;
   if (currencyFilter.value) params.currency = currencyFilter.value;
+  if (projectFilter.value) params.project_id = projectFilter.value;
   router.get("/pp/financials", params, {
     preserveState: true,
     preserveScroll: true,
