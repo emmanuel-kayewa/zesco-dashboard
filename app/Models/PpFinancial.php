@@ -9,6 +9,7 @@ class PpFinancial extends Model
 {
     protected $fillable = [
         'finance_code',
+        'contract_id',
         'pp_project_id',
         'as_of_date',
         'committed_amount',
@@ -23,6 +24,20 @@ class PpFinancial extends Model
         'committed_amount' => 'decimal:2',
         'paid_to_date'     => 'decimal:2',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $financial) {
+            if (empty($financial->finance_code)) {
+                $last = static::where('finance_code', 'like', 'FIN-%')
+                    ->orderByRaw("CAST(SUBSTRING(finance_code, 5) AS UNSIGNED) DESC")
+                    ->value('finance_code');
+
+                $next = $last ? ((int) substr($last, 4)) + 1 : 1;
+                $financial->finance_code = 'FIN-' . str_pad($next, 4, '0', STR_PAD_LEFT);
+            }
+        });
+    }
 
     public function project(): BelongsTo
     {
