@@ -35,8 +35,24 @@ class PpFinancialController extends Controller
             ->orderByDesc('as_of_date')
             ->orderBy('finance_code');
 
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('finance_code', 'like', "%{$search}%")
+                  ->orWhere('contract_id', 'like', "%{$search}%")
+                  ->orWhereHas('project', function ($pq) use ($search) {
+                      $pq->where('project_code', 'like', "%{$search}%")
+                         ->orWhere('project_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
         if ($request->filled('currency')) {
             $query->where('currency', $request->input('currency'));
+        }
+
+        if ($request->filled('project_id')) {
+            $query->where('pp_project_id', $request->input('project_id'));
         }
 
         $financials = $query->paginate(30)->withQueryString();
@@ -46,7 +62,7 @@ class PpFinancialController extends Controller
             'activeTab'  => 'financials',
             'financials' => $financials,
             'ppProjects' => $projects,
-            'filters'    => $request->only(['currency']),
+            'filters'    => $request->only(['search', 'currency', 'project_id']),
         ]);
     }
 
