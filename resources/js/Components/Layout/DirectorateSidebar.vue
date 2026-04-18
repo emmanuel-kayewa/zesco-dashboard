@@ -115,7 +115,7 @@
                             >
                                 {{ summary.spendPct ?? 0 }}%
                             </p>
-                            <p class="text-[10px] text-gray-500 leading-tight">Spend</p>
+                            <p class="text-[10px] text-gray-500 leading-tight">Spent</p>
                         </div>
                     </template>
                     <template v-else-if="summary">
