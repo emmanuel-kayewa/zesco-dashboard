@@ -102,6 +102,7 @@
           :options="projectOptions"
           label="Project"
           required
+          searchable
           :error="form.errors.pp_project_id"
         />
       </div>
@@ -112,7 +113,7 @@
         required
         :error="form.errors.milestone"
       />
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-3">
         <Select
           v-model="form.category"
           :options="categoryOpts"
@@ -128,7 +129,7 @@
         />
         <Input v-model="form.owner" label="Owner" :error="form.errors.owner" />
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-3">
         <DatePicker
           v-model="form.baseline_date"
           label="Baseline Date"
