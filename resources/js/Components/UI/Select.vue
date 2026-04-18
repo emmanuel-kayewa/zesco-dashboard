@@ -74,7 +74,7 @@
           <!-- Search input -->
           <div
             v-if="searchable"
-            class="sticky top-0 bg-white dark:bg-gray-800 px-2 pt-1 pb-2 border-b border-zinc-100 dark:border-gray-700"
+            class="sticky top-0 z-10 bg-white dark:bg-gray-800 px-2 pt-1 pb-2 border-b border-zinc-100 dark:border-gray-700 shadow-sm"
           >
             <input
               ref="searchInputEl"
@@ -137,6 +137,7 @@
 
             <span
               class="block truncate"
+              :title="getOptionLabel(option)"
               :class="
                 getOptionValue(option) == modelValue
                   ? 'font-medium text-zinc-900 dark:text-white'
