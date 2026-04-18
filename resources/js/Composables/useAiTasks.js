@@ -1,5 +1,21 @@
 export function useAiTasks() {
-    const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
+    /**
+     * Build CSRF headers, preferring the XSRF-TOKEN cookie (refreshed by
+     * Laravel on every response) over the meta tag (only set at page load).
+     */
+    function csrfHeaders() {
+        const cookie = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+        if (cookie) return { 'X-XSRF-TOKEN': decodeURIComponent(cookie[1]) };
+        const meta = document.querySelector('meta[name="csrf-token"]')?.content;
+        return meta ? { 'X-CSRF-TOKEN': meta } : {};
+    }
+
+    /** Make a lightweight GET so Laravel sets a fresh XSRF-TOKEN cookie. */
+    async function refreshCsrf() {
+        try {
+            await fetch('/', { credentials: 'same-origin', headers: { 'Accept': 'text/html' } });
+        } catch { /* swallow – the retry will surface the real error */ }
+    }
 
     async function pollTask(taskId, intervalMs = 3000, maxPollMs = 900000) {
         const deadline = Date.now() + maxPollMs;
@@ -10,7 +26,7 @@ export function useAiTasks() {
             const resp = await fetch(`/api/ai/task/${taskId}`, {
                 headers: {
                     'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken(),
+                    ...csrfHeaders(),
                 },
             });
 
@@ -34,17 +50,24 @@ export function useAiTasks() {
     /**
      * Post to an AI endpoint. Handles both sync and async (job) responses.
      * If the response contains { async: true, task_id }, it polls until completion.
+     * On a 419 (CSRF mismatch), refreshes the token cookie and retries once.
      */
-    async function aiPost(url, body = {}) {
+    async function aiPost(url, body = {}, _retried = false) {
         const resp = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'X-CSRF-TOKEN': csrfToken(),
+                ...csrfHeaders(),
             },
             body: JSON.stringify(body),
         });
+
+        // On CSRF mismatch, refresh the token cookie and retry once
+        if (resp.status === 419 && !_retried) {
+            await refreshCsrf();
+            return aiPost(url, body, true);
+        }
 
         // Guard: read as text first so an HTML error page doesn't blow up JSON.parse
         const text = await resp.text();
