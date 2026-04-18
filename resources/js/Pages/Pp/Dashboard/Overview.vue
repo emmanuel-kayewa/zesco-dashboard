@@ -96,20 +96,20 @@
                     <svg class="w-4 h-4 text-gray-400 group-hover:text-zesco-500 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-2">
-                    <div>
+                <div class="grid grid-cols-2 lg:grid-cols-1 2xl:grid-cols-2 gap-4 mb-2">
+                    <div class="min-w-0">
                         <p class="text-xs text-gray-400">Projects</p>
-                        <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ card.projectCount }}</p>
+                        <p class="tabular-nums text-2xl sm:text-3xl lg:text-2xl 2xl:text-3xl font-bold text-gray-900 dark:text-white">{{ card.projectCount }}</p>
                     </div>
-                    <div>
+                    <div class="min-w-0">
                         <p class="text-xs text-gray-400">Investment</p>
-                        <p class="text-3xl font-bold text-gray-900 dark:text-white">${{ fmtM(card.totalCost) }}</p>
+                        <p class="tabular-nums text-2xl sm:text-3xl lg:text-2xl 2xl:text-3xl font-bold text-gray-900 dark:text-white">${{ fmtM(card.totalCost) }}</p>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
+                <div class="flex items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400 mb-3 lg:flex-col lg:items-start lg:gap-1">
                     <span>Paid: ${{ fmtM(card.totalPaid) }}</span>
-                    <span>Spend: {{ card.spendPct ?? 0 }}%</span>
+                    <span>Spend Rate: {{ card.spendPct ?? 0 }}%</span>
                 </div>
 
                 <div class="flex items-center justify-between">
