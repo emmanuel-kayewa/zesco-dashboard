@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Directorate;
+use App\Models\PortfolioSnapshot;
 use App\Models\WayleaveEntry;
 use App\Models\PpProject;
 use App\Models\PpFinancial;
@@ -133,6 +134,29 @@ class DashboardController extends Controller
             ->values()
             ->toArray();
 
+        // ── Compute period-over-period changes from snapshots ──
+        $snapshots = PortfolioSnapshot::orderByDesc('snapshot_date')->limit(2)->get();
+        $projectsChange = null;
+        $committedChange = null;
+        $progressChange = null;
+
+        if ($snapshots->count() === 2) {
+            $current  = $snapshots->first();
+            $previous = $snapshots->last();
+
+            $projectsChange = $previous->total_projects > 0
+                ? round((($current->total_projects - $previous->total_projects) / $previous->total_projects) * 100, 1)
+                : null;
+
+            $committedChange = $previous->total_committed > 0
+                ? round((($current->total_committed - $previous->total_committed) / $previous->total_committed) * 100, 1)
+                : null;
+
+            $progressChange = $previous->avg_progress > 0
+                ? round(($current->avg_progress - $previous->avg_progress), 1)
+                : null;
+        }
+
         return Inertia::render('Dashboard/Index', [
             'directorates' => $directorates,
             'directorateSummaries' => $directorateSummaries,
@@ -145,6 +169,9 @@ class DashboardController extends Controller
                 'totalRisks' => $totalRisks,
                 'highRisks' => $highRisks,
                 'openRisks' => $openRisks,
+                'projectsChange' => $projectsChange,
+                'committedChange' => $committedChange,
+                'progressChange' => $progressChange,
             ],
             'charts' => [
                 'sectorBreakdown' => $sectorBreakdown,
