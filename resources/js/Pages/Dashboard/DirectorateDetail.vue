@@ -1,169 +1,6 @@
 <template>
   <AppLayout :directorates="directorates">
     <template #title>{{ directorate.name }}</template>
-
-    <!-- Header & filters only shown when NOT in directorate sidebar mode -->
-    <template v-if="!directorateStore.activeDirectorate">
-      <Breadcrumb
-        :items="[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: directorate.code, current: true },
-        ]"
-      />
-
-      <PageHeader>
-        <template #left>
-          <div class="flex items-center gap-4 min-w-0">
-            <div
-              class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
-              :style="{ backgroundColor: directorate.color }"
-            >
-              {{ directorate.code?.charAt(0) }}
-            </div>
-            <div class="min-w-0">
-              <h2
-                class="text-lg font-bold text-gray-900 dark:text-white truncate"
-              >
-                {{ directorate.name }}
-              </h2>
-              <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
-                {{ directorate.code }} &middot;
-                {{ directorate.head_name || "Head not assigned" }}
-              </p>
-            </div>
-          </div>
-        </template>
-
-        <template #metrics>
-          <div
-            class="grid grid-cols-2 gap-4 text-center justify-items-center sm:flex sm:flex-wrap sm:items-center sm:gap-6 sm:justify-end"
-          >
-            <!-- PP uses portfolio stats from pp_* tables -->
-            <template v-if="directorate.code === 'PP' && ppPortfolio">
-              <div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-white">
-                  {{ ppPortfolio.boardSummary.totalProjects }}
-                </p>
-                <p class="text-xs text-gray-500">Projects</p>
-              </div>
-              <div>
-                <p
-                  class="text-2xl font-bold"
-                  :style="{ color: INVESTMENT.committed }"
-                >
-                  ${{ fmtM(ppPortfolio.boardSummary.totalCommitted) }}
-                </p>
-                <p class="text-xs text-gray-500">Committed</p>
-              </div>
-              <div>
-                <p
-                  class="text-2xl font-bold"
-                  :style="{
-                    color:
-                      (ppPortfolio.boardSummary.spendPct ?? 0) >= 50
-                        ? RAG.green
-                        : RAG.amber,
-                  }"
-                >
-                  {{ ppPortfolio.boardSummary.spendPct }}%
-                </p>
-                <p class="text-xs text-gray-500">Spend</p>
-              </div>
-            </template>
-
-            <!-- Other directorates use generic KPI stats -->
-            <template v-else>
-              <div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-white">
-                  {{ kpiSummary.total || 0 }}
-                </p>
-                <p class="text-xs text-gray-500">KPIs</p>
-              </div>
-              <div>
-                <p
-                  class="text-2xl font-bold"
-                  :style="{
-                    color:
-                      (kpiSummary.completion_percentage ?? 0) >= 75
-                        ? RAG.green
-                        : RAG.amber,
-                  }"
-                >
-                  {{ kpiSummary.completion_percentage || 0 }}%
-                </p>
-                <p class="text-xs text-gray-500">Completion</p>
-              </div>
-              <div>
-                <p
-                  class="text-2xl font-bold"
-                  :class="
-                    kpiSummary.high_risk > 2
-                      ? ''
-                      : 'text-gray-900 dark:text-white'
-                  "
-                  :style="
-                    kpiSummary.high_risk > 2 ? { color: RAG.red } : undefined
-                  "
-                >
-                  {{ kpiSummary.high_risk || 0 }}
-                </p>
-                <p class="text-xs text-gray-500">High Risks</p>
-              </div>
-            </template>
-          </div>
-        </template>
-      </PageHeader>
-
-      <!-- Filters (generic directorates only, hidden when no data) -->
-      <div
-        v-if="directorate.code !== 'PP' && hasData"
-        class="flex flex-wrap items-end gap-4 mb-6 no-print"
-      >
-        <DatePicker
-          v-model="filters.from"
-          label="From"
-          placeholder="Start date"
-          size="md"
-        />
-        <DatePicker
-          v-model="filters.to"
-          label="To"
-          placeholder="End date"
-          size="md"
-        />
-        <div class="flex items-center gap-2 self-end">
-          <button @click="applyFilters" class="btn-primary text-sm">
-            Apply
-          </button>
-          <button @click="clearFilters" class="btn-secondary text-sm">
-            Clear
-          </button>
-        </div>
-        <Select
-          v-model="selectedKpiCategory"
-          :options="[
-            { value: '', label: 'All Categories' },
-            ...kpiCategories.map((c) => ({ value: c, label: c })),
-          ]"
-          size="md"
-          class="w-full sm:!w-48 sm:flex-none"
-        />
-
-        <div class="flex items-center gap-2 ml-auto">
-          <a
-            :href="`/export/directorate/${directorate.slug}/pdf`"
-            class="btn-secondary text-sm"
-            >PDF</a
-          >
-          <a
-            :href="`/export/directorate/${directorate.slug}/excel`"
-            class="btn-secondary text-sm"
-            >Excel</a
-          >
-        </div>
-      </div>
-    </template>
-
     <!-- ══════════════════════════════════════════════════════════
              PP PORTFOLIO DASHBOARD — Redirects to dedicated drill-down pages
              ══════════════════════════════════════════════════════════ -->
@@ -214,9 +51,12 @@
         </div> -->
 
     <!-- Empty state for directorates with no data -->
-    <div v-if="directorate.code !== 'PP' && !hasData" class="text-center py-16">
+    <div
+      v-if="directorate.code !== 'PP' && !hasData"
+      class="flex flex-col items-center justify-center text-center min-h-[60vh]"
+    >
       <div
-        class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center"
+        class="w-16 h-16 mb-4 rounded-2xl bg-gray-200 dark:bg-gray-800 flex items-center justify-center"
       >
         <svg
           class="w-8 h-8 text-gray-400 dark:text-gray-500"
@@ -587,18 +427,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { Link, router } from "@inertiajs/vue3";
+import { Link } from "@inertiajs/vue3";
 import AppLayout from "@/Components/Layout/AppLayout.vue";
-import Breadcrumb from "@/Components/UI/Breadcrumb.vue";
-import KpiCard from "@/Components/Dashboard/KpiCard.vue";
 import Card from "@/Components/UI/Card.vue";
 import ChartCard from "@/Components/UI/ChartCard.vue";
-import PageHeader from "@/Components/UI/PageHeader.vue";
 import Select from "@/Components/UI/Select.vue";
 import Badge from "@/Components/UI/Badge.vue";
-import DatePicker from "@/Components/UI/DatePicker.vue";
 import LineChart from "@/Components/Charts/LineChart.vue";
-import { INVESTMENT, RAG } from "@/Composables/useChartPalette";
 import { formatCurrency } from "@/Composables/useFormatters";
 import { useBadges } from "@/Composables/useBadges";
 import { useDirectorateStore } from "@/stores/useDirectorateStore";
@@ -615,12 +450,9 @@ const props = defineProps({
   projects: { type: Array, default: () => [] },
   risks: { type: Array, default: () => [] },
   trend: { type: Object, default: () => ({ data: [], forecast: [] }) },
-  filters: { type: Object, default: () => ({ from: "", to: "" }) },
   ppPortfolio: { type: Object, default: () => null },
 });
 
-const filters = ref({ ...props.filters });
-const selectedKpiCategory = ref("");
 const trendKpiId = ref(props.kpis[0]?.id || null);
 const trendData = ref(props.trend.data || []);
 const trendForecast = ref(props.trend.forecast || []);
@@ -676,13 +508,13 @@ const kpiCategories = computed(() => {
   return Array.from(cats);
 });
 
-const topKpis = computed(() => {
-  let list = props.kpis;
-  if (selectedKpiCategory.value) {
-    list = list.filter((k) => k.category === selectedKpiCategory.value);
-  }
-  return list.slice(0, 8);
-});
+// const topKpis = computed(() => {
+//   let list = props.kpis;
+//   if (selectedKpiCategory.value) {
+//     list = list.filter((k) => k.category === selectedKpiCategory.value);
+//   }
+//   return list.slice(0, 8);
+// });
 
 async function fetchTrend() {
   if (!trendKpiId.value) return;
@@ -690,7 +522,6 @@ async function fetchTrend() {
     const params = new URLSearchParams({
       kpi_id: trendKpiId.value,
       directorate_id: props.directorate.id,
-      ...Object.fromEntries(Object.entries(filters.value).filter(([, v]) => v)),
     });
 
     const response = await fetch(`/api/kpi-trend?${params.toString()}`);
@@ -706,31 +537,5 @@ async function fetchTrend() {
   } catch (e) {
     console.error("Failed to fetch trend data:", e);
   }
-}
-
-function applyFilters() {
-  router.get(
-    `/dashboard/directorate/${props.directorate.slug}`,
-    {
-      from: filters.value.from || undefined,
-      to: filters.value.to || undefined,
-    },
-    { preserveState: true },
-  );
-}
-
-function clearFilters() {
-  filters.value = { from: "", to: "" };
-  router.get(`/dashboard/directorate/${props.directorate.slug}`);
-}
-
-// PP directorate now uses the dedicated drill-down dashboard at /pp/dashboard
-// Keep fmtM for the redirect card summary stats
-function fmtM(val) {
-  const n = Number(val) || 0;
-  if (n >= 1e9) return (n / 1e9).toFixed(2) + "B";
-  if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
-  if (n >= 1e3) return (n / 1e3).toFixed(1) + "K";
-  return n.toLocaleString();
 }
 </script>
