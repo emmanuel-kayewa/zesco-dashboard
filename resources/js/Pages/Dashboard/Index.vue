@@ -41,18 +41,16 @@
         <div v-show="activeTab === 'overview'">
 
             <!-- KPI Summary Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-4 mb-6">
                 <KpiCard
                     title="Total Projects"
                     :formattedValue="String(portfolio.totalProjects)"
                     :change="null"
-                    status="healthy"
                 />
                 <KpiCard
                     title="Portfolio Committed"
                     :formattedValue="fmtUsd(portfolio.totalCommitted)"
                     :change="null"
-                    status="healthy"
                 />
                 <KpiCard
                     title="Average Progress"
@@ -60,12 +58,12 @@
                     :change="null"
                     :status="portfolio.avgProgress >= 50 ? 'healthy' : 'warning'"
                 />
-                <KpiCard
+                <!-- <KpiCard
                     title="Risk Exposure"
                     :formattedValue="portfolio.highRisks + ' High / ' + portfolio.totalRisks + ' Total'"
                     :change="null"
                     :status="portfolio.highRisks > 5 ? 'critical' : portfolio.highRisks > 0 ? 'warning' : 'healthy'"
-                />
+                /> -->
             </div>
 
             <!-- Charts Row 1: Sector Investment + Portfolio Cost -->
