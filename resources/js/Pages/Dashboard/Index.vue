@@ -45,17 +45,17 @@
                 <KpiCard
                     title="Total Projects"
                     :formattedValue="String(portfolio.totalProjects)"
-                    :change="null"
+                    :change="portfolio.projectsChange"
                 />
                 <KpiCard
                     title="Portfolio Committed"
                     :formattedValue="fmtUsd(portfolio.totalCommitted)"
-                    :change="null"
+                    :change="portfolio.committedChange"
                 />
                 <KpiCard
                     title="Average Progress"
                     :formattedValue="portfolio.avgProgress + '%'"
-                    :change="null"
+                    :change="portfolio.progressChange"
                     :status="portfolio.avgProgress >= 50 ? 'healthy' : 'warning'"
                 />
                 <!-- <KpiCard
