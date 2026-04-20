@@ -23,7 +23,7 @@ class PpProjectRequest extends FormRequest
             'sector'            => 'required|string|in:Generation,Transmission,Distribution,IPP',
             'sub_sector'        => 'nullable|string|max:255',
             'project_stage'     => 'required|string|in:Execution,Preparation,Completed,Cancelled,Commissioned',
-            'status'            => 'nullable|string|in:On Track,Delayed,At Risk',
+            'status'            => 'nullable|string|in:On Track,Delayed,At Risk,On Hold',
             'programme'         => 'nullable|string|max:255',
             'province'          => 'nullable|string|max:255',
             'district'          => 'nullable|string|max:255',
