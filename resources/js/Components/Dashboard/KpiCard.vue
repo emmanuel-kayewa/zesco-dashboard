@@ -5,7 +5,7 @@
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ title }}</p>
                 <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ formattedValue }}</p>
             </div>
-            <div :class="['px-2 py-1 rounded-md text-xs font-semibold', statusClass]">
+            <div v-if="status" :class="['px-2 py-1 rounded-md text-xs font-semibold', statusClass]">
                 {{ status }}
             </div>
         </div>
@@ -19,10 +19,10 @@
                     <path fill-rule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
                 <span :class="['text-sm font-medium', changeClass]">
-                    {{ change !== null ? `${change > 0 ? '+' : ''}${change.toFixed(1)}%` : '—' }}
+                    {{ change !== null ? `${change > 0 ? '+' : ''}${change.toFixed(1)}%` : '' }}
                 </span>
             </div>
-            <p class="text-xs text-gray-400 dark:text-gray-500">
+            <p v-if="targetFormatted" class="text-xs text-gray-400 dark:text-gray-500">
                 Target: {{ targetFormatted }}
             </p>
         </div>
@@ -48,9 +48,9 @@ const props = defineProps({
     value: { type: [Number, String], default: 0 },
     formattedValue: { type: String, default: '0' },
     target: { type: Number, default: null },
-    targetFormatted: { type: String, default: '—' },
+    targetFormatted: { type: String, default: '' },
     change: { type: Number, default: null },
-    status: { type: String, default: 'healthy' },
+    status: { type: String, default: '' },
     unit: { type: String, default: 'number' },
     color: { type: String, default: null },
     showSparkline: { type: Boolean, default: false },
