@@ -27,6 +27,12 @@ Schedule::command('dashboard:weekly-digest')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/digest.log'));
 
+// Capture daily portfolio snapshot for KPI change indicators
+Schedule::command('portfolio:snapshot')
+    ->daily()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/portfolio-snapshot.log'));
+
 // Clear expired cache entries daily
 Schedule::command('cache:prune-stale-tags')
     ->daily()
