@@ -464,7 +464,7 @@ const settingsForm = reactive(
 );
 
 function toggleSimulation() {
-  router.post("/admin/simulation/toggle", {}, { preserveScroll: true });
+  router.post("/admin/simulation/toggle", { enabled: !props.simulationActive }, { preserveScroll: true });
 }
 
 function runSimulationCycle() {
