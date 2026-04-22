@@ -67,7 +67,7 @@
             </div>
 
             <!-- Charts Row 1: Sector Investment + Portfolio Cost -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <ChartCard title="Investment by Sector (USD)" :baseHeight="340">
                     <template #default="{ zoomedHeight }">
                         <BarChart
@@ -93,10 +93,20 @@
                         />
                     </template>
                 </ChartCard>
+
+                <ChartCard title="Projects by Sector" :baseHeight="320">
+                    <template #default>
+                        <Pie3DChart
+                            :data="charts.sectorBreakdown"
+                            height="320px"
+                            :depth="35"
+                        />
+                    </template>
+                </ChartCard>
             </div>
 
             <!-- Charts Row 2: Projects by Sector + Risks by Category -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <ChartCard title="Projects by Sector" :baseHeight="320">
                     <template #default>
                         <Pie3DChart
@@ -116,7 +126,7 @@
                         />
                     </template>
                 </ChartCard>
-            </div>
+            </div> -->
 
             <!-- Top Issues -->
             <Card v-if="topIssues.length > 0" title="Attention Required" class="mb-6">
