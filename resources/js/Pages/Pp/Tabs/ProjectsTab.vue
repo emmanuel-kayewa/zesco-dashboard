@@ -676,6 +676,7 @@ const healthStatusOptions = [
   { value: "On Track", label: "On Track" },
   { value: "Delayed", label: "Delayed" },
   { value: "At Risk", label: "At Risk" },
+  { value: "On Hold", label: "On Hold" },
 ];
 const lifecycleOptions = [
   { value: "Implementation", label: "Implementation" },
