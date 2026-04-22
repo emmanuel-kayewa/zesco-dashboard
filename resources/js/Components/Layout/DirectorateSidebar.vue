@@ -154,10 +154,10 @@
         </div>
 
         <!-- Divider -->
-        <div v-if="expanded && showFilters" class="mx-4 border-t border-gray-200 dark:border-gray-700 my-1 flex-shrink-0"></div>
+        <!-- <div v-if="expanded && showFilters" class="mx-4 border-t border-gray-200 dark:border-gray-700 my-1 flex-shrink-0"></div> -->
 
         <!-- Filters Section (scrollable) -->
-        <div v-if="expanded && showFilters" class="flex-1 overflow-y-auto px-3 py-2">
+        <!-- <div v-if="expanded && showFilters" class="flex-1 overflow-y-auto px-3 py-2">
             <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2 px-1">Filters</p>
 
             <div class="space-y-3">
@@ -184,7 +184,7 @@
                 </div>
             </div>
 
-            <!-- Export Actions -->
+            //Export Actions
             <div v-if="directorate.slug" class="mt-4 space-y-1.5">
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2 px-1">Export</p>
                 <div class="flex items-center gap-2">
@@ -192,7 +192,7 @@
                     <a :href="`/export/directorate/${directorate.slug}/excel`" class="flex-1 btn-secondary text-xs text-center py-1.5">Excel</a>
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <!-- PP Explorer Filters (sidebar version, large screens only) -->
         <div v-if="expanded && isPP && explorerState.active" class="flex-1 overflow-y-auto px-3 py-2">
@@ -280,7 +280,7 @@ import { ref, computed, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { useDirectorateStore } from '@/stores/useDirectorateStore';
 import SidebarLink from './SidebarLink.vue';
-import DateRangePicker from '@/Components/UI/DateRangePicker.vue';
+// import DateRangePicker from '@/Components/UI/DateRangePicker.vue';
 import Select from '@/Components/UI/Select.vue';
 
 const props = defineProps({
@@ -291,18 +291,18 @@ const props = defineProps({
     showFilters: { type: Boolean, default: true },
 });
 
-const emit = defineEmits(['filter-change', 'exit']);
+// const emit = defineEmits(['filter-change', 'exit']);
 
 const page = usePage();
 const directorateStore = useDirectorateStore();
 const currentUrl = computed(() => page.url);
 const isPP = computed(() => props.directorate?.code === 'PP');
 
-const localFilters = ref({
-    from: directorateStore.sidebarFilters.from || '',
-    to: directorateStore.sidebarFilters.to || '',
-    category: directorateStore.sidebarFilters.category || '',
-});
+// const localFilters = ref({
+//     from: directorateStore.sidebarFilters.from || '',
+//     to: directorateStore.sidebarFilters.to || '',
+//     category: directorateStore.sidebarFilters.category || '',
+// });
 
 // PP Explorer filter state from store
 const explorerState = computed(() => directorateStore.explorerFilterState);
@@ -359,15 +359,15 @@ function handleBack() {
     router.visit('/dashboard');
 }
 
-function emitFilterChange() {
-    directorateStore.updateFilters(localFilters.value);
-    emit('filter-change', { ...localFilters.value });
-}
+// function emitFilterChange() {
+//     directorateStore.updateFilters(localFilters.value);
+//     emit('filter-change', { ...localFilters.value });
+// }
 
-function clearFilters() {
-    localFilters.value = { from: '', to: '', category: '' };
-    emitFilterChange();
-}
+// function clearFilters() {
+//     localFilters.value = { from: '', to: '', category: '' };
+//     emitFilterChange();
+// }
 
 function fmtM(val) {
     const n = Number(val) || 0;
