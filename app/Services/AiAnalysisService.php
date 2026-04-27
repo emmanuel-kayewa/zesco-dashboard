@@ -4,10 +4,16 @@ namespace App\Services;
 
 use App\Models\Alert;
 use App\Models\Directorate;
+use App\Models\FinancialEntry;
 use App\Models\Kpi;
 use App\Models\KpiEntry;
 use App\Models\Incident;
+use App\Models\PpFinancial;
+use App\Models\PpMilestone;
+use App\Models\PpProgrammeOutput;
 use App\Models\PpProject;
+use App\Models\PpSafeguard;
+use App\Models\Project;
 use App\Models\Risk;
 use App\Models\WayleaveEntry;
 use App\Services\AI\AiProviderManager;
@@ -58,6 +64,10 @@ class AiAnalysisService
 You are a senior business intelligence analyst at ZESCO Limited, Zambia's primary electricity utility company.
 Analyze the provided KPI data and generate an executive briefing.
 
+IMPORTANT: Data availability varies by directorate. Some directorates may have extensive KPI and financial data while others may have little or none. Only analyse directorates that have actual data — do NOT invent or assume figures for directorates with empty data. If a directorate has no KPIs or entries, briefly note that data is not yet available for it and move on.
+
+The Planning & Projects (PP) directorate uses a dedicated portfolio dataset provided under the "pp_portfolio_data" key. Use this data for PP analysis — it includes project counts, investment figures (committed/paid in USD), sector and status breakdowns, milestone progress, financial summaries, safeguard data (PAPs and compensation), and programme delivery outputs. Treat PP portfolio metrics with the same analytical rigour as standard directorate KPIs.
+
 CRITICAL: Every value in your JSON must be the correct type. "summary", "risk_assessment", and "outlook" MUST be plain-text strings (human-readable paragraphs), NOT objects or arrays. "key_concerns", "positive_highlights", and "recommendations" MUST be arrays of strings.
 
 Your response must be valid JSON with EXACTLY this structure:
@@ -86,6 +96,8 @@ Chart guidelines:
 - Use real directorate names and actual KPI values from the data
 - Keep labels short (max 15 chars) so they fit in a sidebar
 - Choose chart types that best represent the data: horizontal_bar for comparisons, pie for proportions, gauge for single scores, line for trends
+- Only include charts for directorates that have actual data
+- For PP, you may chart sector breakdown, project status distribution, or investment spend percentage
 
 Be specific with numbers. Reference actual directorate names and KPI values. Be concise but insightful.
 PROMPT;
@@ -219,7 +231,9 @@ Answer the user's question using the provided dashboard data. Be specific with n
 
 The data includes KPI metrics, financial summaries, wayleave/survey processing data (applications received vs cleared by aspect/type), and recent alerts.
 
-If the question cannot be answered with the available data, say so clearly.
+The Planning & Projects (PP) directorate uses a dedicated portfolio dataset provided under the "pp_portfolio_data" key. This includes project counts, total committed/paid investment (USD), sector and status breakdowns, milestone progress, financial summaries, safeguard data (PAPs, compensation paid), and programme delivery outputs (connections, transformers). Use this data when answering PP-related questions.
+
+IMPORTANT: Data availability varies by directorate. Some directorates may have limited or no data. Only reference data that is actually present. If a directorate has no data or the question cannot be answered with the available data, say so clearly.
 
 Return valid JSON:
 {
@@ -450,6 +464,7 @@ PROMPT;
 
         $entries = KpiEntry::where('kpi_id', $kpiId)
             ->where('directorate_id', $directorateId)
+            ->where('source', '!=', 'simulation')
             ->orderBy('period_date')
             ->get(['value', 'period_date', 'period_type'])
             ->toArray();
@@ -705,8 +720,74 @@ PROMPT;
 
     private function gatherExecutiveContext(): array
     {
-        $summary = $this->dashboard->getExecutiveSummary();
         $directorates = Directorate::active()->with(['kpis' => fn($q) => $q->active()])->get();
+        $directorateIds = $directorates->pluck('id')->toArray();
+
+        // Build organization summary from real DB data (bypasses data source manager)
+        $financialEntries = FinancialEntry::whereIn('directorate_id', $directorateIds)
+            ->where('source', '!=', 'simulation')
+            ->get()
+            ->groupBy('directorate_id');
+
+        $allRisks = Risk::whereIn('directorate_id', $directorateIds)
+            ->where('source', '!=', 'simulation')
+            ->get()
+            ->groupBy('directorate_id');
+
+        $allProjects = Project::whereIn('directorate_id', $directorateIds)
+            ->where('source', '!=', 'simulation')
+            ->get()
+            ->groupBy('directorate_id');
+
+        $orgSummary = [
+            'total_revenue' => 0,
+            'total_budget' => 0,
+            'total_risks' => 0,
+            'high_risks' => 0,
+            'avg_completion' => 0,
+            'directorates' => [],
+        ];
+
+        $completionValues = [];
+
+        foreach ($directorates as $dir) {
+            $dFinancials = $financialEntries->get($dir->id, collect());
+            $revenue = (float) $dFinancials->where('category', 'revenue')->sum('amount');
+            $budget = (float) $dFinancials->where('category', 'budget')->sum('amount');
+
+            $dRisks = $allRisks->get($dir->id, collect());
+            $riskCount = $dRisks->count();
+            $highRisks = $dRisks->filter(fn($r) => in_array($r->getRiskLevel(), ['critical', 'high']))->count();
+
+            $dProjects = $allProjects->get($dir->id, collect());
+            $avgCompletion = $dProjects->avg('completion_percentage');
+
+            $orgSummary['total_revenue'] += $revenue;
+            $orgSummary['total_budget'] += $budget;
+            $orgSummary['total_risks'] += $riskCount;
+            $orgSummary['high_risks'] += $highRisks;
+
+            if ($avgCompletion !== null) {
+                $completionValues[] = $avgCompletion;
+            }
+
+            $orgSummary['directorates'][] = [
+                'id' => $dir->id,
+                'name' => $dir->name,
+                'code' => $dir->code,
+                'revenue' => $revenue,
+                'budget' => $budget,
+                'budget_utilization' => $budget > 0 ? round($revenue / $budget * 100, 1) : 0,
+                'completion_percentage' => $avgCompletion !== null ? round($avgCompletion, 1) : null,
+                'risk_count' => $riskCount,
+                'high_risk_count' => $highRisks,
+                'has_data' => $revenue > 0 || $budget > 0 || $riskCount > 0 || $dProjects->isNotEmpty(),
+            ];
+        }
+
+        $orgSummary['avg_completion'] = !empty($completionValues)
+            ? round(array_sum($completionValues) / count($completionValues), 1)
+            : null;
 
         $alerts = Alert::unread()
             ->orderByDesc('created_at')
@@ -745,10 +826,11 @@ PROMPT;
         }
 
         return [
-            'organization_summary' => $summary,
+            'organization_summary' => $orgSummary,
             'directorates' => $kpiSummaries,
             'recent_alerts' => $alerts,
             'wayleave_and_survey_data' => $this->gatherWayleaveContext(),
+            'pp_portfolio_data' => $this->gatherPpPortfolioSummary(),
             'analysis_date' => now()->format('Y-m-d'),
         ];
     }
@@ -761,6 +843,7 @@ PROMPT;
         // Get recent entries for this KPI
         $entries = KpiEntry::where('kpi_id', $kpiId)
             ->where('directorate_id', $directorateId)
+            ->where('source', '!=', 'simulation')
             ->orderByDesc('period_date')
             ->limit(12)
             ->get(['value', 'previous_value', 'period_date', 'notes'])
@@ -776,6 +859,7 @@ PROMPT;
         foreach ($dirKpis as $otherKpi) {
             $latest = KpiEntry::where('kpi_id', $otherKpi->id)
                 ->where('directorate_id', $directorateId)
+                ->where('source', '!=', 'simulation')
                 ->orderByDesc('period_date')
                 ->first();
 
@@ -794,6 +878,7 @@ PROMPT;
         if (class_exists(\App\Models\Incident::class)) {
             $incidents = Incident::where('directorate_id', $directorateId)
                 ->where('created_at', '>=', now()->subMonths(3))
+                ->where('source', '!=', 'simulation')
                 ->orderByDesc('created_at')
                 ->limit(10)
                 ->get(['title', 'severity', 'status', 'created_at'])
@@ -801,6 +886,7 @@ PROMPT;
         }
 
         $risks = Risk::where('directorate_id', $directorateId)
+            ->where('source', '!=', 'simulation')
             ->orderByDesc('score')
             ->limit(10)
             ->get(['title', 'category', 'score', 'status'])
@@ -851,9 +937,53 @@ PROMPT;
 
     private function gatherQueryContext(): array
     {
-        $summary = $this->dashboard->getExecutiveSummary();
+        $directorates = Directorate::active()->get();
+        $directorateIds = $directorates->pluck('id')->toArray();
 
-        $directorates = Directorate::active()->get(['id', 'name', 'code'])->toArray();
+        // Build organization summary from real DB data (bypasses data source manager)
+        $financialEntries = FinancialEntry::whereIn('directorate_id', $directorateIds)
+            ->where('source', '!=', 'simulation')
+            ->get()
+            ->groupBy('directorate_id');
+
+        $allRisks = Risk::whereIn('directorate_id', $directorateIds)
+            ->where('source', '!=', 'simulation')
+            ->get()
+            ->groupBy('directorate_id');
+
+        $summary = [
+            'total_revenue' => 0,
+            'total_budget' => 0,
+            'total_risks' => 0,
+            'high_risks' => 0,
+            'directorates' => [],
+        ];
+
+        foreach ($directorates as $dir) {
+            $dFinancials = $financialEntries->get($dir->id, collect());
+            $revenue = (float) $dFinancials->where('category', 'revenue')->sum('amount');
+            $budget = (float) $dFinancials->where('category', 'budget')->sum('amount');
+
+            $dRisks = $allRisks->get($dir->id, collect());
+            $riskCount = $dRisks->count();
+            $highRisks = $dRisks->filter(fn($r) => in_array($r->getRiskLevel(), ['critical', 'high']))->count();
+
+            $summary['total_revenue'] += $revenue;
+            $summary['total_budget'] += $budget;
+            $summary['total_risks'] += $riskCount;
+            $summary['high_risks'] += $highRisks;
+
+            $summary['directorates'][] = [
+                'id' => $dir->id,
+                'name' => $dir->name,
+                'code' => $dir->code,
+                'revenue' => $revenue,
+                'budget' => $budget,
+                'risk_count' => $riskCount,
+                'high_risk_count' => $highRisks,
+                'has_data' => $revenue > 0 || $budget > 0 || $riskCount > 0,
+            ];
+        }
 
         $kpis = Kpi::active()->get(['id', 'name', 'code', 'category', 'unit', 'target_value'])->toArray();
 
@@ -868,10 +998,11 @@ PROMPT;
 
         return [
             'organization_summary' => $summary,
-            'directorates' => $directorates,
+            'directorates' => $directorates->map(fn($d) => ['id' => $d->id, 'name' => $d->name, 'code' => $d->code])->toArray(),
             'available_kpis' => $kpis,
             'recent_alerts' => $recentAlerts,
             'wayleave_and_survey_data' => $wayleaveData,
+            'pp_portfolio_data' => $this->gatherPpPortfolioSummary(),
             'current_date' => now()->format('Y-m-d'),
         ];
     }
@@ -882,6 +1013,7 @@ PROMPT;
 
         // Get entries from this week vs last week
         $thisWeekEntries = KpiEntry::where('period_date', '>=', $weekAgo)
+            ->where('source', '!=', 'simulation')
             ->with(['kpi:id,name,category,unit,target_value', 'directorate:id,name'])
             ->get()
             ->groupBy('directorate.name')
@@ -960,6 +1092,116 @@ PROMPT;
         }
 
         return $result;
+    }
+
+    /**
+     * Gather a compact PP portfolio summary from pp_* tables only.
+     * Uses: pp_projects, pp_milestones, pp_financials, pp_safeguards, pp_programme_outputs.
+     */
+    private function gatherPpPortfolioSummary(): array
+    {
+        try {
+            $projects = PpProject::all();
+        } catch (\Throwable $e) {
+            Log::warning('Failed to gather PP portfolio summary for AI context', ['error' => $e->getMessage()]);
+            return [];
+        }
+
+        if ($projects->isEmpty()) {
+            return [];
+        }
+
+        $projectIds = $projects->pluck('id')->toArray();
+
+        // Project summary
+        $totalProjects = $projects->count();
+        $totalCostUsd = (float) $projects->sum('cost_usd');
+        $totalCapacityMw = (float) $projects->sum('capacity_mw');
+        $totalCommissionedMw = (float) $projects->sum('commissioned_mw');
+        $avgProgress = round((float) $projects->avg('progress_pct'), 1);
+
+        // Sector breakdown
+        $sectorBreakdown = $projects->groupBy('sector')->map(fn($group, $sector) => [
+            'sector' => $sector ?: 'Unknown',
+            'project_count' => $group->count(),
+            'total_cost_usd' => round((float) $group->sum('cost_usd'), 2),
+            'avg_progress' => round((float) $group->avg('progress_pct'), 1),
+            'total_capacity_mw' => round((float) $group->sum('capacity_mw'), 1),
+        ])->values()->take(8)->toArray();
+
+        // Status breakdown
+        $statusBreakdown = $projects->groupBy('status')->map(fn($group, $status) => [
+            'status' => $status ?: 'Unknown',
+            'count' => $group->count(),
+        ])->values()->take(6)->toArray();
+
+        // Financials from pp_financials table
+        $financials = PpFinancial::whereIn('pp_project_id', $projectIds)->get();
+        $totalCommitted = (float) $financials->sum('committed_amount');
+        $totalPaid = (float) $financials->sum('paid_to_date');
+        $spendPct = $totalCommitted > 0 ? round($totalPaid / $totalCommitted * 100, 1) : 0;
+
+        // Milestones from pp_milestones table
+        $milestones = PpMilestone::whereIn('pp_project_id', $projectIds)->get();
+        $totalMilestones = $milestones->count();
+        $completedMilestones = $milestones->whereNotNull('actual_date')->count();
+        $overdueMilestones = $milestones->whereNull('actual_date')
+            ->filter(fn($m) => $m->forecast_date && $m->forecast_date->isPast())->count();
+        $avgDelay = round((float) $milestones->where('delay_days', '>', 0)->avg('delay_days'), 0);
+
+        // Safeguards from pp_safeguards table
+        $safeguards = PpSafeguard::whereIn('pp_project_id', $projectIds)->get();
+        $totalPaps = (int) $safeguards->sum('paps');
+        $totalCompPaid = (float) $safeguards->sum('comp_paid_zmw');
+
+        // Programme outputs from pp_programme_outputs table
+        $outputs = PpProgrammeOutput::all();
+        $programmeOutputs = $outputs->groupBy('programme')->map(fn($group, $prog) => [
+            'programme' => $prog,
+            'total_connections' => (int) $group->sum('connections_delivered'),
+            'total_transformers' => (int) $group->sum('transformers_energised'),
+            'jobs_pending' => (int) $group->sum('jobs_pending_connection'),
+        ])->values()->take(6)->toArray();
+
+        // Recent issues (projects with key issues)
+        $recentIssues = $projects->filter(fn($p) => !empty($p->key_issue_summary))
+            ->sortByDesc('last_update_date')
+            ->take(5)
+            ->map(fn($p) => [
+                'name' => $p->project_name,
+                'sector' => $p->sector,
+                'status' => $p->status,
+                'progress_pct' => (float) $p->progress_pct,
+                'key_issue' => $p->key_issue_summary,
+            ])->values()->toArray();
+
+        return [
+            'total_projects' => $totalProjects,
+            'total_cost_usd' => $totalCostUsd,
+            'total_capacity_mw' => $totalCapacityMw,
+            'total_commissioned_mw' => $totalCommissionedMw,
+            'avg_progress_pct' => $avgProgress,
+            'sector_breakdown' => $sectorBreakdown,
+            'status_breakdown' => $statusBreakdown,
+            'financials' => [
+                'total_committed' => $totalCommitted,
+                'total_paid' => $totalPaid,
+                'spend_pct' => $spendPct,
+            ],
+            'milestones' => [
+                'total' => $totalMilestones,
+                'completed' => $completedMilestones,
+                'overdue' => $overdueMilestones,
+                'completion_pct' => $totalMilestones > 0 ? round($completedMilestones / $totalMilestones * 100, 1) : 0,
+                'avg_delay_days' => $avgDelay,
+            ],
+            'safeguards' => [
+                'total_paps' => $totalPaps,
+                'total_compensation_paid_zmw' => $totalCompPaid,
+            ],
+            'programme_outputs' => $programmeOutputs,
+            'recent_issues' => $recentIssues,
+        ];
     }
 
     // ═══════════════════════════════════════════════════════════
